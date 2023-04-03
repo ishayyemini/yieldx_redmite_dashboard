@@ -1,58 +1,32 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom'
+import { Grommet } from 'grommet'
 
-import App from './App'
-import AuthLayout from './components/AuthLayout'
+import App, { appLoader } from './App'
+import AuthLayout, { authLoader } from './components/AuthLayout'
+import GlobalStyle, { theme } from './components/app/GlobalStyle'
+import SignIn, { signInAction } from './components/auth/SignIn'
 
 const router = createBrowserRouter([
   {
-    element: <App />,
+    path: '/',
     children: [
-      // {
-      //   path: '/',
-      //   element: <MainLayout />,
-      //   loader: mainLoader,
-      //   children: [
-      //     {
-      //       path: 'reports',
-      //       element: <Reports />,
-      //       loader: reportsLoader,
-      //       children: [
-      //         { index: true, element: <ChooseReport /> },
-      //         {
-      //           path: ':UID',
-      //           element: <ReportView />,
-      //         },
-      //       ],
-      //     },
-      //     {
-      //       path: 'devices',
-      //       element: <DevicesInfo />,
-      //       children: [
-      //         {
-      //           path: ':MAC',
-      //           element: <DeviceView />,
-      //           loader: deviceViewLoader,
-      //         },
-      //       ],
-      //     },
-      //     {
-      //       path: 'settings',
-      //       element: <Settings />,
-      //     },
-      //   ],
-      // },
       {
-        path: '/',
+        index: true,
+        loader: appLoader,
+        element: <App />,
+      },
+      {
+        loader: authLoader,
         element: <AuthLayout />,
-        // children: [
-        //   {
-        //     path: '/login',
-        //     element: <SignIn />,
-        //     action: signInAction,
-        //   },
-        // ],
+        children: [
+          {
+            path: 'login',
+            element: <SignIn />,
+            action: signInAction,
+          },
+        ],
       },
     ],
   },
@@ -61,6 +35,10 @@ const router = createBrowserRouter([
 const root = ReactDOM.createRoot(document.getElementById('root') as Element)
 root.render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <Grommet theme={theme}>
+      <GlobalStyle />
+      <RouterProvider router={router} />
+      <Outlet />
+    </Grommet>
   </React.StrictMode>
 )

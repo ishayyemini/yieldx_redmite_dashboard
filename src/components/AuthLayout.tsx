@@ -1,28 +1,19 @@
-import { Box, Button, Card, Heading, Main } from 'grommet'
+import { Card, Main } from 'grommet'
+import { ActionFunction, Outlet, redirect } from 'react-router-dom'
 
-import { TextField } from './app/AppComponents'
+import API from '../data/API'
+
+export const authLoader: ActionFunction = async (args) => {
+  const user = await API.loadUser()
+  if (user) return redirect('/')
+  else return null
+}
 
 const AuthLayout = () => {
   return (
     <Main align={'center'} justify={'center'}>
       <Card>
-        <form>
-          <Box align={'center'}>
-            <img src={'/wide-logo.png'} alt={'YieldX wide logo'} />
-            <Heading level={3} margin={'none'}>
-              RedMite Dashboard
-            </Heading>
-            <Box gap={'small'} margin={{ vertical: 'medium' }}>
-              <TextField label={'Username'} name={'username'} />
-              <TextField
-                label={'Password'}
-                name={'password'}
-                type={'password'}
-              />
-            </Box>
-            <Button label={'Login'} type={'submit'} primary />
-          </Box>
-        </form>
+        <Outlet />
       </Card>
     </Main>
   )
