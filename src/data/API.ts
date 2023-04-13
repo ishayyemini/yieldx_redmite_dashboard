@@ -8,15 +8,32 @@ type MQTTDeviceType = {
   END: number
   DETCT: number
   TRND: number
+  BSTAT: number
+}
+
+type MQTTSensDataType = {
+  BoardID: string
+  Location: string
+  House: string
+  InHouseLoc: string
+  Contact: string
+  Customer: string
 }
 
 export type DeviceType = {
   id: string
-  start: Date | 0
-  end: Date | 0
-  trained: Date | 0
-  detection: Date | 0
-  lastUpdated: Date
+  battery?: number
+  start?: Date | 0
+  end?: Date | 0
+  trained?: Date | 0
+  detection?: Date | 0
+  location?: string
+  house?: string
+  inHouseLoc?: string
+  customer?: string
+  contact?: string
+  lastUpdated?: Date
+  lastSens?: Date
 }
 
 type APIConfigType = {
@@ -111,27 +128,69 @@ class APIClass {
 
   subscribeToRM() {
     if (this._client) {
-      const subTopic = 'YIELDX/STAT/RM/#'
       this._setGlobalState((oldCtx) => ({ ...oldCtx, devices: {} }))
-      this._client.subscribe(subTopic)
+      this._client.subscribe(['YIELDX/STAT/RM/#', 'sensdata/#'])
       this._client.on('message', (topic, payload) => {
-        try {
-          const parsed: MQTTDeviceType = JSON.parse(payload.toString())
-          const device: DeviceType = {
-            id: topic.slice(subTopic.length - 1),
-            start: parsed.STRT ? new Date(parsed.STRT * 1000) : 0,
-            end: parsed.END ? new Date(parsed.END * 1000) : 0,
-            detection: parsed.DETCT ? new Date(parsed.DETCT * 1000) : 0,
-            trained: parsed.TRND ? new Date(parsed.TRND * 1000) : 0,
-            lastUpdated: new Date(parsed.TS * 1000),
+        if (topic.startsWith('YIELDX/STAT/RM/'))
+          try {
+            const parsed: MQTTDeviceType = JSON.parse(payload.toString())
+            const device: DeviceType = {
+              id: topic.split('/')[3],
+              start: parsed.STRT ? new Date(parsed.STRT * 1000) : 0,
+              end: parsed.END ? new Date(parsed.END * 1000) : 0,
+              detection: parsed.DETCT ? new Date(parsed.DETCT * 1000) : 0,
+              trained: parsed.TRND ? new Date(parsed.TRND * 1000) : 0,
+              battery: parsed.BSTAT,
+              lastUpdated: new Date(parsed.TS * 1000),
+            }
+            this._setGlobalState((oldCtx) => ({
+              ...oldCtx,
+              devices: {
+                ...(oldCtx.devices ?? {}),
+                [device.id]: {
+                  ...(oldCtx.devices?.[device.id] ?? {}),
+                  ...device,
+                },
+              },
+            }))
+          } catch {
+            console.error('Cannot parse mqtt message')
           }
-          this._setGlobalState((oldCtx) => ({
-            ...oldCtx,
-            devices: { ...(oldCtx.devices ?? {}), [device.id]: device },
-          }))
-        } catch {
-          console.error('Cannot parse mqtt message')
-        }
+        if (topic.startsWith('sensdata/'))
+          try {
+            const parsed: MQTTSensDataType = JSON.parse(payload.toString())
+            const id = topic.split('/')[1]
+            const time = new Date(topic.split('/')[2])
+            const {
+              Location: location,
+              House: house,
+              InHouseLoc: inHouseLoc,
+              Customer: customer,
+              Contact: contact,
+            } = parsed
+            this._setGlobalState((oldCtx) => {
+              if ((oldCtx.devices?.[id]?.lastSens ?? 0) < time)
+                return {
+                  ...oldCtx,
+                  devices: {
+                    ...(oldCtx.devices ?? {}),
+                    [id]: {
+                      id,
+                      ...(oldCtx.devices?.[id] ?? {}),
+                      lastSens: time,
+                      location,
+                      house,
+                      inHouseLoc,
+                      customer,
+                      contact,
+                    },
+                  },
+                }
+              else return oldCtx
+            })
+          } catch {
+            console.error('Cannot parse mqtt message')
+          }
       })
     }
   }

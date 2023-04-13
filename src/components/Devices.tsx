@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { DataTable, Main } from 'grommet'
+import { DataTable } from 'grommet'
 import TimeAgo from 'javascript-time-ago'
 
 import GlobalContext from '../data/GlobalContext'
@@ -22,13 +22,51 @@ const Devices = () => {
   const { devices } = useContext(GlobalContext)
 
   return (
-    <Main>
-      <DataTable
-        columns={[{ property: 'status', render: (datum) => calcStatus(datum) }]}
-        primaryKey={'id'}
-        data={Object.values(devices ?? {})}
-      />
-    </Main>
+    <DataTable
+      columns={[
+        { property: 'location', header: 'Location' },
+        { property: 'house', header: 'House' },
+        { property: 'inHouseLoc', header: 'In House Location' },
+        {
+          property: 'battery',
+          header: 'Battery',
+          render: (datum) => datum.battery + '%',
+        },
+        {
+          property: 'start',
+          header: 'Start',
+          render: (datum) => datum.start?.toLocaleString(),
+        },
+        {
+          property: 'end',
+          header: 'End',
+          render: (datum) => datum.end?.toLocaleString(),
+        },
+        {
+          property: 'trained',
+          header: 'Trained',
+          render: (datum) => datum.trained?.toLocaleString(),
+        },
+        {
+          property: 'detection',
+          header: 'Detection',
+          render: (datum) => datum.detection?.toLocaleString(),
+        },
+        {
+          property: 'lastUpdated',
+          header: 'LastUpdated',
+          render: (datum) => datum.lastUpdated?.toLocaleString(),
+        },
+        {
+          property: 'status',
+          header: 'Status',
+          render: (datum) => calcStatus(datum),
+        },
+      ]}
+      data={Object.values(devices ?? {})}
+      primaryKey={'id'}
+      sortable
+    />
   )
 }
 

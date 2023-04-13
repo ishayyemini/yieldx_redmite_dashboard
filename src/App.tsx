@@ -5,6 +5,7 @@ import {
   redirect,
   useLoaderData,
 } from 'react-router-dom'
+import { Main } from 'grommet'
 
 import GlobalContext, { ContextType } from './data/GlobalContext'
 import API from './data/API'
@@ -32,8 +33,10 @@ const App = () => {
     <GlobalContext.Provider
       value={{ ...globalState, updateContext: setGlobalState }}
     >
-      We are logged in! User {user.username} ID {user.id}
-      <Outlet />
+      <Main>
+        We are logged in! User {user.username} ID {user.id}
+        <Outlet />
+      </Main>
     </GlobalContext.Provider>
   )
 }
