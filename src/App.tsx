@@ -1,7 +1,10 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { ActionFunction, redirect, useLoaderData } from 'react-router-dom'
 
+import GlobalContext, { ContextType } from './data/GlobalContext'
 import API from './data/API'
+
+type GlobalState = Omit<ContextType, 'updateContext'>
 
 export const appLoader: ActionFunction = async () => {
   const user = await API.loadUser()
@@ -11,10 +14,21 @@ export const appLoader: ActionFunction = async () => {
 const App = () => {
   const user = useLoaderData() as { username: string; id: string }
 
+  const [globalState, setGlobalState] = useState<GlobalState>({})
+
+  useEffect(() => {
+    API.configure(setGlobalState)
+    API.subscribeToRM()
+  }, [])
+
+  console.log(globalState)
+
   return (
-    <>
+    <GlobalContext.Provider
+      value={{ ...globalState, updateContext: setGlobalState }}
+    >
       We are logged in! User {user.username} ID {user.id}
-    </>
+    </GlobalContext.Provider>
   )
 }
 
