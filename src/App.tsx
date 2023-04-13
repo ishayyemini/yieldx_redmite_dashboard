@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { ActionFunction, redirect, useLoaderData } from 'react-router-dom'
+import {
+  ActionFunction,
+  Outlet,
+  redirect,
+  useLoaderData,
+} from 'react-router-dom'
 
 import GlobalContext, { ContextType } from './data/GlobalContext'
 import API from './data/API'
@@ -28,6 +33,7 @@ const App = () => {
       value={{ ...globalState, updateContext: setGlobalState }}
     >
       We are logged in! User {user.username} ID {user.id}
+      <Outlet />
     </GlobalContext.Provider>
   )
 }

@@ -13,6 +13,7 @@
     "got": "^11.8.6",
     "grommet": "^2.31.0",
     "grommet-icons": "^4.10.0",
+    "javascript-time-ago": "^2.5.9",
     "mqtt": "^4.3.7",
     "react": "^18.2.0",
     "react-circular-progressbar": "^2.1.0",
