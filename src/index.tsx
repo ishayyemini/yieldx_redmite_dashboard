@@ -10,6 +10,7 @@ import AuthLayout, { authLoader } from './components/AuthLayout'
 import GlobalStyle, { theme } from './components/app/GlobalStyle'
 import SignIn, { signInAction } from './components/auth/SignIn'
 import Devices from './components/Devices'
+import DeviceView, { deviceUpdateAction } from './components/DeviceView'
 
 TimeAgo.addDefaultLocale(en)
 
@@ -20,7 +21,10 @@ const router = createBrowserRouter([
       {
         loader: appLoader,
         element: <App />,
-        children: [{ index: true, element: <Devices /> }],
+        children: [
+          { index: true, element: <Devices /> },
+          { path: ':id', element: <DeviceView />, action: deviceUpdateAction },
+        ],
       },
       {
         loader: authLoader,

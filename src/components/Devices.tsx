@@ -1,6 +1,7 @@
 import { useContext } from 'react'
 import { Box, DataTable, Text } from 'grommet'
 import TimeAgo from 'javascript-time-ago'
+import { useNavigate } from 'react-router'
 
 import GlobalContext from '../data/GlobalContext'
 import { DeviceType } from '../data/API'
@@ -20,6 +21,8 @@ const calcStatus = (device: DeviceType): string => {
 
 const Devices = () => {
   const { devices } = useContext(GlobalContext)
+
+  const navigate = useNavigate()
 
   return (
     <DataTable
@@ -75,6 +78,7 @@ const Devices = () => {
         },
       ]}
       data={Object.values(devices ?? {})}
+      onClickRow={({ datum }) => navigate(datum.id)}
       primaryKey={'id'}
       sortable
     />
