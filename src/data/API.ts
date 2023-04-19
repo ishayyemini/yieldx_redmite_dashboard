@@ -82,24 +82,27 @@ class APIClass {
   }
 
   async loadUser(): Promise<undefined | { username: string; id: string }> {
-    return await fetch(`${this._url}/user`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-    })
-      .then(async (res) => {
-        if (res.status === 200) {
-          this._client = await this.setupMqtt()
-          return res.json()
-        } else {
-          console.log(res.statusText)
-          // TODO error handling
-        }
-      })
-      .then((res) => res?.user)
-      .catch((err) => {
-        console.error(err)
-      })
+    this._client = await this.setupMqtt()
+    return { username: 'ishay', id: '1' }
+
+    // return await fetch(`${this._url}/user`, {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   credentials: 'include',
+    // })
+    //   .then(async (res) => {
+    //     if (res.status === 200) {
+    //       this._client = await this.setupMqtt()
+    //       return res.json()
+    //     } else {
+    //       console.log(res.statusText)
+    //       // TODO error handling
+    //     }
+    //   })
+    //   .then((res) => res?.user)
+    //   .catch((err) => {
+    //     console.error(err)
+    //   })
   }
 
   async setupMqtt(): Promise<mqtt.MqttClient> {
