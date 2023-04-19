@@ -42,10 +42,6 @@ const TextFieldWrapper = styled(Box)<{ error?: string }>`
   }
 
   input {
-    //font-family: inherit;
-    //font-size: 1em;
-    //font-weight: 600;
-    //height: 1.5em;
     z-index: 1;
     padding: 13px;
     border: none;
@@ -70,8 +66,11 @@ const TextFieldWrapper = styled(Box)<{ error?: string }>`
     color: var(
       ${(props) => (props.error ? '--error' : '--on-surface-variant')}
     );
+    opacity: 0.3;
+    font-style: italic;
     transition: transform 0.15s ease-out, font-size 0.15s ease-out,
-      background-color 0.2s ease-out, color 0.15s ease-out;
+      background-color 0.2s ease-out, color 0.15s ease-out,
+      opacity 0.15s ease-out;
   }
 
   svg {
@@ -94,6 +93,7 @@ const TextFieldWrapper = styled(Box)<{ error?: string }>`
     background-color: inherit;
     font-size: 0.65em;
     padding: 0 13px;
+    opacity: 1;
     color: var(${(props) => (props.error ? '--error' : '--outline')});
     transform: translate(0, -21px);
   }
@@ -118,6 +118,7 @@ const TextFieldWrapper = styled(Box)<{ error?: string }>`
     border-color: var(
       ${(props) => (props.error ? '--on-error-container' : '--on-surface')}
     );
+    opacity: 1;
     stroke: var(--on-error-container);
   }
 
@@ -127,6 +128,7 @@ const TextFieldWrapper = styled(Box)<{ error?: string }>`
     border-color: var(${(props) => (props.error ? '--error' : '--primary')});
     color: var(${(props) => (props.error ? '--error' : '--primary')});
     stroke: var(--error);
+    opacity: 1;
     border-width: 2px;
   }
 `
