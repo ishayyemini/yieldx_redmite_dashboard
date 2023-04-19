@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { DataTable } from 'grommet'
+import { Box, DataTable, Text } from 'grommet'
 import TimeAgo from 'javascript-time-ago'
 
 import GlobalContext from '../data/GlobalContext'
@@ -30,7 +30,18 @@ const Devices = () => {
         {
           property: 'battery',
           header: 'Battery',
-          render: (datum) => datum.battery + '%',
+          render: (datum) => (
+            <Box
+              background={
+                datum.battery === 'Ok' ? 'var(--primary)' : 'var(--error)'
+              }
+              align={'center'}
+              pad={'xsmall'}
+              fill
+            >
+              <Text color={'var(--on-primary)'}>{datum.battery}</Text>
+            </Box>
+          ),
         },
         {
           property: 'start',

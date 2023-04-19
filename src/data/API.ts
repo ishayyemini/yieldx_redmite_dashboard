@@ -8,7 +8,7 @@ type MQTTDeviceType = {
   END: number
   DETCT: number
   TRND: number
-  BSTAT: number
+  BSTAT: 'OK' | 'High' | 'Low'
 }
 
 type MQTTSensDataType = {
@@ -22,7 +22,7 @@ type MQTTSensDataType = {
 
 export type DeviceType = {
   id: string
-  battery?: number
+  battery?: 'Ok' | 'Low'
   start?: Date | 0
   end?: Date | 0
   trained?: Date | 0
@@ -140,7 +140,7 @@ class APIClass {
               end: parsed.END ? new Date(parsed.END * 1000) : 0,
               detection: parsed.DETCT ? new Date(parsed.DETCT * 1000) : 0,
               trained: parsed.TRND ? new Date(parsed.TRND * 1000) : 0,
-              battery: parsed.BSTAT,
+              battery: parsed.BSTAT === 'Low' ? 'Low' : 'Ok',
               lastUpdated: new Date(parsed.TS * 1000),
             }
             this._setGlobalState((oldCtx) => ({
