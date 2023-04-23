@@ -4,8 +4,9 @@ import {
   Outlet,
   redirect,
   useLoaderData,
+  useNavigate,
 } from 'react-router-dom'
-import { Main } from 'grommet'
+import { Button, Card, Main } from 'grommet'
 
 import GlobalContext, { ContextType } from './data/GlobalContext'
 import API from './data/API'
@@ -27,14 +28,21 @@ const App = () => {
     API.subscribeToRM()
   }, [])
 
-  console.log(globalState)
+  const navigate = useNavigate()
 
   return (
     <GlobalContext.Provider
       value={{ ...globalState, updateContext: setGlobalState }}
     >
       <Main>
-        We are logged in! User {user.username} ID {user.id}
+        <Card direction={'row'} justify={'between'} align={'center'}>
+          We are logged in! User {user.username} ID {user.id}
+          <Button
+            label={'Logout'}
+            onClick={() => API.signOut().then(() => navigate('/login'))}
+            secondary
+          />
+        </Card>
         <Outlet />
       </Main>
     </GlobalContext.Provider>
