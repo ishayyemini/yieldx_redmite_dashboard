@@ -64,6 +64,7 @@ class APIClass {
   _setGlobalState: UpdateContextType = () => null
   _url: string = 'https://api.yieldx-biosec.com'
   _client: mqtt.MqttClient | null = null
+  _subscribed: boolean = false
 
   configure(setGlobalState?: UpdateContextType) {
     if (setGlobalState) this._setGlobalState = setGlobalState
@@ -97,6 +98,9 @@ class APIClass {
     return await this.fetcher('logout').finally(() => {
       this._setGlobalState((oldCtx) => ({ ...oldCtx, user: undefined }))
       this._config.user = {}
+      this._subscribed = false
+      this._client?.end()
+      this._client = null
     })
   }
 
@@ -148,7 +152,8 @@ class APIClass {
   }
 
   subscribeToRM() {
-    if (this._client) {
+    if (this._client && !this._subscribed) {
+      this._subscribed = true
       this._setGlobalState((oldCtx) => ({ ...oldCtx, devices: {} }))
       this._client.subscribe(['YIELDX/STAT/RM/#', 'sensdata/#'])
       this._client.on('message', (topic, payload) => {
