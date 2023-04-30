@@ -15,9 +15,10 @@ type GlobalState = Omit<ContextType, 'updateContext'>
 
 export const appLoader: ActionFunction = async () => {
   const user = await API.loadUser()
-  if (user) return user
+  if (user.username) return user
   else return redirect('/login')
 }
+
 const App = () => {
   const user = useLoaderData() as { username: string; id: string }
 

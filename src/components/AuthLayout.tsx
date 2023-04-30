@@ -3,9 +3,9 @@ import { ActionFunction, Outlet, redirect } from 'react-router-dom'
 
 import API from '../data/API'
 
-export const authLoader: ActionFunction = async (args) => {
+export const authLoader: ActionFunction = async () => {
   const user = await API.loadUser()
-  if (user) return redirect('/')
+  if (user.username) return redirect('/')
   else return null
 }
 

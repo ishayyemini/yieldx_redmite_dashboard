@@ -38,7 +38,7 @@ export type DeviceType = {
 }
 
 type APIConfigType = {
-  user?: { username: string; id: string }
+  user?: { username?: string; id?: string }
   mqtt: {
     server: string
     port: number
@@ -46,6 +46,8 @@ type APIConfigType = {
     basePath: string
   }
 }
+
+type APIRoute = 'login' | 'user' | 'logout'
 
 const adminUsers = ['ishay2', 'lior', 'amit']
 
@@ -67,75 +69,56 @@ class APIClass {
     if (setGlobalState) this._setGlobalState = setGlobalState
   }
 
-  async signIn(username: string, password: string) {
-    return await fetch(`${this._url}/login`, {
+  private fetcher(route: APIRoute, body?: object) {
+    return fetch(`${this._url}/${route}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
+      body: body ? JSON.stringify(body) : undefined,
       credentials: 'include',
     })
+      .then((res) => res.json())
       .then((res) => {
-        if (res.status === 200) {
-          return res.json()
-        } else {
-          console.log(res.statusText)
-          // TODO error handling
-        }
+        if (res?.data) return res.data
+        else throw new Error(res?.error?.message || 'Server Error')
       })
-      .then((res) => {
-        console.log(res)
-      })
-      .catch((err) => {
-        console.error(err)
-      })
+  }
+
+  async signIn(username: string, password: string) {
+    return await this.fetcher('login', { username, password }).then(
+      async (data) => {
+        this._client = await this.setupMqtt()
+        this._config.user = { username: data.user.username, id: data.user.id }
+        return data.user
+      }
+    )
   }
 
   async signOut() {
-    return await fetch(`${this._url}/logout`, {
-      method: 'POST',
-      credentials: 'include',
+    return await this.fetcher('logout').finally(() => {
+      this._setGlobalState((oldCtx) => ({ ...oldCtx, user: undefined }))
+      this._config.user = {}
     })
-      .then((res) => {
-        if (res.status === 200) {
-          return res.text()
-        } else {
-          console.log(res.statusText)
-          // TODO error handling
-        }
-      })
-      .then((res) => {
-        this._setGlobalState((oldCtx) => ({ ...oldCtx, user: undefined }))
-        this._config.user = undefined
-      })
-      .catch((err) => {
-        console.error(err)
-      })
   }
 
-  async loadUser(): Promise<undefined | { username: string; id: string }> {
-    return await fetch(`${this._url}/user`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-    })
-      .then(async (res) => {
-        if (res.status === 200) {
-          this._client = await this.setupMqtt()
-          return res.json()
-        } else {
-          console.log(res.statusText)
-          // TODO error handling
-        }
-      })
-      .then((res) => {
-        if (res?.user?.username && res.user.id) {
-          this._config.user = { username: res.user.username, id: res.user.id }
-          return res.user
-        } else throw new Error('No user data')
-      })
-      .catch((err) => {
-        console.error(err)
-      })
+  async loadUser(): Promise<{ username?: string; id?: string }> {
+    if (this._config.user) return this._config.user
+    else
+      return await this.fetcher('user')
+        .then(async (data) => {
+          if (data?.user?.username && data.user.id) {
+            this._client = await this.setupMqtt()
+            this._config.user = {
+              username: data.user.username,
+              id: data.user.id,
+            }
+            return this._config.user
+          } else throw new Error('No user data')
+        })
+        .catch((err) => {
+          console.error(err)
+          this._config.user = {}
+          return this._config.user
+        })
   }
 
   async setupMqtt(): Promise<mqtt.MqttClient> {

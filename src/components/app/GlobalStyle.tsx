@@ -241,6 +241,7 @@ export const theme: ThemeType = {
       'accent-2': 'var(--accent2)',
       muted: 'var(--muted)',
       border: 'var(--outline-variant)',
+      'status-error': 'var(--error)',
     },
   },
   checkBox: {
