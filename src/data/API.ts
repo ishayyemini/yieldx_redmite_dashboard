@@ -1,4 +1,5 @@
 import mqtt from 'mqtt/dist/mqtt'
+import jwt_decode, { JwtPayload } from 'jwt-decode'
 
 import { UpdateContextType } from './GlobalContext'
 
@@ -39,6 +40,7 @@ export type DeviceType = {
 
 type APIConfigType = {
   user?: { username?: string; id?: string }
+  token?: string
   mqtt: {
     server: string
     port: number
@@ -47,13 +49,20 @@ type APIConfigType = {
   }
 }
 
-type APIRoute = 'login' | 'user' | 'logout'
+type APIRoute = 'login' | 'user' | 'logout' | 'refresh'
+type APIResponse<Route> = {
+  user: Route extends 'login' | 'user'
+    ? { username: string; id: string }
+    : never
+  token: Route extends 'login' | 'refresh' ? string : never
+}
 
 const adminUsers = ['ishay2', 'lior', 'amit']
 
 class APIClass {
   _config: APIConfigType = {
     user: undefined,
+    token: undefined,
     mqtt: {
       server: 'broker.hivemq.com',
       port: 8000,
@@ -70,10 +79,26 @@ class APIClass {
     if (setGlobalState) this._setGlobalState = setGlobalState
   }
 
-  private fetcher(route: APIRoute, body?: object) {
+  private async fetcher<Route extends APIRoute>(
+    route: Route,
+    body?: object
+  ): Promise<APIResponse<Route>> {
+    if (!['logout', 'refresh', 'login'].includes(route)) {
+      let parsed
+      try {
+        parsed = jwt_decode<JwtPayload>(this._config.token ?? '')
+        if (Date.now() > (parsed.exp ?? 0) * 1000) parsed = undefined
+      } catch {}
+      if (!parsed && !(await this.refreshTokens()))
+        throw new Error('Unauthorized')
+    }
+
     return fetch(`${this._url}/${route}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this._config.token}`,
+      },
       body: body ? JSON.stringify(body) : undefined,
       credentials: 'include',
     })
@@ -87,9 +112,10 @@ class APIClass {
   async signIn(username: string, password: string) {
     return await this.fetcher('login', { username, password }).then(
       async (data) => {
+        this._config.user = data.user
+        this._config.token = data.token
         this._client = await this.setupMqtt()
-        this._config.user = { username: data.user.username, id: data.user.id }
-        return data.user
+        return this._config.user
       }
     )
   }
@@ -98,6 +124,7 @@ class APIClass {
     return await this.fetcher('logout').finally(() => {
       this._setGlobalState((oldCtx) => ({ ...oldCtx, user: undefined }))
       this._config.user = {}
+      this._config.token = undefined
       this._subscribed = false
       this._client?.end()
       this._client = null
@@ -105,24 +132,31 @@ class APIClass {
   }
 
   async loadUser(): Promise<{ username?: string; id?: string }> {
-    if (this._config.user) return this._config.user
-    else
-      return await this.fetcher('user')
-        .then(async (data) => {
-          if (data?.user?.username && data.user.id) {
-            this._client = await this.setupMqtt()
-            this._config.user = {
-              username: data.user.username,
-              id: data.user.id,
-            }
-            return this._config.user
-          } else throw new Error('No user data')
-        })
-        .catch((err) => {
-          console.error(err)
-          this._config.user = {}
-          return this._config.user
-        })
+    // if (this._config.user) return this._config.user
+    return await this.fetcher('user')
+      .then(async (data) => {
+        console.log(data)
+        this._config.user = data.user
+        if (!this._client) this._client = await this.setupMqtt()
+        return this._config.user
+      })
+      .catch((err) => {
+        console.error(err)
+        this._config.user = {}
+        return this._config.user
+      })
+  }
+
+  async refreshTokens() {
+    return await this.fetcher('refresh')
+      .then((data) => {
+        this._config.token = data.token
+        return true
+      })
+      .catch(() => {
+        this.signOut()
+        return false
+      })
   }
 
   async setupMqtt(): Promise<mqtt.MqttClient> {
