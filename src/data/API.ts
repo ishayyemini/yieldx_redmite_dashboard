@@ -71,7 +71,7 @@ class APIClass {
     },
   }
   _setGlobalState: UpdateContextType = () => null
-  _url: string = 'https://api.yieldx-biosec.com'
+  _url: string = 'api.yieldx-biosec.com'
   _client: mqtt.MqttClient | null = null
   _subscribed: boolean = false
 
@@ -93,7 +93,7 @@ class APIClass {
         throw new Error('Unauthorized')
     }
 
-    return fetch(`${this._url}/${route}`, {
+    return fetch(`https://${this._url}/${route}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -161,6 +161,30 @@ class APIClass {
   }
 
   async setupMqtt(): Promise<mqtt.MqttClient> {
+    if (this._config.token) {
+      const token = this._config.token
+      let ws = new WebSocket(`wss://${this._url}/echo`)
+      let authorized = false
+      ws.onopen = () => {
+        ws.send(token)
+      }
+      ws.onmessage = (msg) => {
+        if (!authorized && msg.data === 'authorized') authorized = true
+        console.log(msg)
+      }
+      ws.onerror = (err) => {
+        console.log(err)
+      }
+      ws.onclose = (msg) => {
+        console.log(msg)
+        console.log('closed')
+      }
+
+      setTimeout(() => {
+        if (authorized) ws.send('hey')
+      }, 5000)
+    }
+
     return new Promise((resolve, reject) => {
       let { server, port, basePath } = this._config.mqtt
       const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
