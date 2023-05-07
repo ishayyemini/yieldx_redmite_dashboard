@@ -49,12 +49,12 @@ type APIConfigType = {
   }
 }
 
-type APIRoute = 'login' | 'user' | 'logout' | 'refresh'
+type APIRoute = 'auth/login' | 'auth/logout' | 'auth/refresh' | 'user'
 type APIResponse<Route> = {
-  user: Route extends 'login' | 'user'
+  user: Route extends 'auth/login' | 'user'
     ? { username: string; id: string }
     : never
-  token: Route extends 'login' | 'refresh' ? string : never
+  token: Route extends 'auth/login' | 'auth/refresh' ? string : never
 }
 
 const adminUsers = ['ishay2', 'lior', 'amit']
@@ -83,7 +83,7 @@ class APIClass {
     route: Route,
     body?: object
   ): Promise<APIResponse<Route>> {
-    if (!['logout', 'refresh', 'login'].includes(route)) {
+    if (!route.startsWith('auth')) {
       let parsed
       try {
         parsed = jwt_decode<JwtPayload>(this._config.token ?? '')
@@ -110,7 +110,7 @@ class APIClass {
   }
 
   async signIn(username: string, password: string) {
-    return await this.fetcher('login', { username, password }).then(
+    return await this.fetcher('auth/login', { username, password }).then(
       async (data) => {
         this._config.user = data.user
         this._config.token = data.token
@@ -121,18 +121,19 @@ class APIClass {
   }
 
   async signOut() {
-    return await this.fetcher('logout').finally(() => {
-      this._setGlobalState((oldCtx) => ({ ...oldCtx, user: undefined }))
-      this._config.user = {}
-      this._config.token = undefined
-      this._subscribed = false
-      this._client?.end()
-      this._client = null
-    })
+    if (this._config.user?.username)
+      return await this.fetcher('auth/logout').finally(() => {
+        this._setGlobalState((oldCtx) => ({ ...oldCtx, user: undefined }))
+        this._config.user = {}
+        this._config.token = undefined
+        this._subscribed = false
+        this._client?.end()
+        this._client = null
+      })
   }
 
   async loadUser(): Promise<{ username?: string; id?: string }> {
-    // if (this._config.user) return this._config.user
+    if (this._config.user) return this._config.user
     return await this.fetcher('user')
       .then(async (data) => {
         console.log(data)
@@ -148,7 +149,7 @@ class APIClass {
   }
 
   async refreshTokens() {
-    return await this.fetcher('refresh')
+    return await this.fetcher('auth/refresh')
       .then((data) => {
         this._config.token = data.token
         return true
