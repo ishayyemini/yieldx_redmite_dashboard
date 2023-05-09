@@ -9,7 +9,7 @@ import {
 import { Button, Card, Main } from 'grommet'
 
 import GlobalContext, { ContextType } from './data/GlobalContext'
-import API, { SettingsType } from './data/API'
+import API, { UserType } from './data/API'
 
 type GlobalState = Omit<ContextType, 'updateContext'>
 
@@ -20,11 +20,7 @@ export const appLoader: ActionFunction = async () => {
 }
 
 const App = () => {
-  const user = useLoaderData() as {
-    username: string
-    id: string
-    settings?: SettingsType
-  }
+  const user = useLoaderData() as UserType
 
   const [globalState, setGlobalState] = useState<GlobalState>({ user })
 
@@ -48,11 +44,13 @@ const App = () => {
           <>
             We are logged in! User {user.username} ID {user.id}
           </>
-          <Button
-            label={'Settings'}
-            onClick={() => navigate('/settings')}
-            primary
-          />
+          {user.admin ? (
+            <Button
+              label={'Settings'}
+              onClick={() => navigate('/settings')}
+              primary
+            />
+          ) : null}
           <Button
             label={'Logout'}
             onClick={() => API.signOut().then(() => navigate('/login'))}

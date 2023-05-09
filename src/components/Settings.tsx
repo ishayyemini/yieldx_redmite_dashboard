@@ -35,6 +35,10 @@ const Settings = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
+    if (!user?.admin) navigate('/', { replace: true })
+  }, [navigate, user?.admin])
+
+  useEffect(() => {
     toggleLoading(false)
   }, [error])
 

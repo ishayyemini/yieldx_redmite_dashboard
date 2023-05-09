@@ -22,8 +22,15 @@ export type SettingsType = {
   mqtt?: string
 }
 
+export type UserType = {
+  username?: string
+  id?: string
+  settings?: SettingsType
+  admin?: boolean
+}
+
 type APIConfigType = {
-  user?: { username?: string; id?: string }
+  user?: UserType
   token?: string
 }
 
@@ -34,9 +41,7 @@ type APIRoute =
   | 'user'
   | 'update-settings'
 type APIResponse<Route> = {
-  user: Route extends 'auth/login' | 'user'
-    ? { username: string; id: string; settings?: SettingsType }
-    : never
+  user: Route extends 'auth/login' | 'user' ? UserType : never
   token: Route extends 'auth/login' | 'auth/refresh' ? string : never
   settings: Route extends 'update-settings' ? SettingsType : never
 }
@@ -108,7 +113,7 @@ class APIClass {
       })
   }
 
-  async loadUser(): Promise<{ username?: string; id?: string }> {
+  async loadUser(): Promise<UserType> {
     if (this._config.user) return this._config.user
     return await this.fetcher('user')
       .then(async (data) => {
@@ -135,16 +140,17 @@ class APIClass {
       })
   }
 
-  updateSettings(settings: SettingsType): Promise<SettingsType> {
-    return this.fetcher('update-settings', { settings }).then(
-      ({ settings }) => {
-        this._setGlobalState((oldCtx) => ({
-          ...oldCtx,
-          user: { ...oldCtx.user, settings },
-        }))
-        return settings
-      }
-    )
+  async updateSettings(settings: SettingsType) {
+    if (this._config.user?.admin)
+      return this.fetcher('update-settings', { settings }).then(
+        ({ settings }) => {
+          this._setGlobalState((oldCtx) => ({
+            ...oldCtx,
+            user: { ...oldCtx.user, settings },
+          }))
+          return settings
+        }
+      )
   }
 
   async setupMqtt(): Promise<WebSocket | undefined> {
