@@ -1,6 +1,12 @@
-import { useContext, useState } from 'react'
-import { Box, Button, Card, Heading, Stack } from 'grommet'
-import { ActionFunction, Form, redirect, useNavigate } from 'react-router-dom'
+import { useContext, useEffect, useState } from 'react'
+import { Box, Button, Card, Heading, Stack, Text } from 'grommet'
+import {
+  ActionFunction,
+  Form,
+  redirect,
+  useActionData,
+  useNavigate,
+} from 'react-router-dom'
 
 import { Loader, TextField } from './app/AppComponents'
 import GlobalContext from '../data/GlobalContext'
@@ -10,18 +16,27 @@ export const updateSettingsAction: ActionFunction = async (args) => {
   const data = await args.request.formData()
   const mqtt = data.get('mqtt')
 
-  if (typeof mqtt === 'string')
-    await API.updateSettings({ mqtt }).then(() => API.setupMqtt())
+  if (typeof mqtt !== 'string') return 'Bad form'
 
-  return redirect('/')
+  return await API.updateSettings({ mqtt })
+    .then(() => {
+      API.setupMqtt()
+      return redirect('/')
+    })
+    .catch((e) => e.message)
 }
 
 const Settings = () => {
+  const error = useActionData() as string
   const { user } = useContext(GlobalContext)
 
   const [loading, toggleLoading] = useState(false)
 
   const navigate = useNavigate()
+
+  useEffect(() => {
+    toggleLoading(false)
+  }, [error])
 
   return (
     <Card width={{ max: '400px' }} alignSelf={'center'}>
@@ -34,11 +49,12 @@ const Settings = () => {
           <Box
             align={'center'}
             style={{ visibility: loading ? 'hidden' : 'initial' }}
+            gap={'small'}
           >
             <Heading level={3} margin={'none'}>
               Settings
             </Heading>
-            <Box gap={'medium'} margin={{ vertical: 'medium' }} fill>
+            <Box fill>
               <TextField
                 label={'MQTT (protocol://address:port)'}
                 name={'mqtt'}
@@ -48,6 +64,7 @@ const Settings = () => {
                 pattern={'mqtts?://[a-z0-9-_.]+:[0-9]{2,4}'}
               />
             </Box>
+            <Text color={'status-error'}>{error ?? ''}</Text>
             <Box direction={'row'} gap={'medium'}>
               <Button label={'Cancel'} onClick={() => navigate(-1)} secondary />
               <Button label={'Update'} type={'submit'} primary />
