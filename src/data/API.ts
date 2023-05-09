@@ -18,17 +18,27 @@ export type DeviceType = {
   lastSens?: Date
 }
 
+type SettingsType = {
+  testField: string
+}
+
 type APIConfigType = {
   user?: { username?: string; id?: string }
   token?: string
 }
 
-type APIRoute = 'auth/login' | 'auth/logout' | 'auth/refresh' | 'user'
+type APIRoute =
+  | 'auth/login'
+  | 'auth/logout'
+  | 'auth/refresh'
+  | 'user'
+  | 'update-settings'
 type APIResponse<Route> = {
   user: Route extends 'auth/login' | 'user'
     ? { username: string; id: string }
     : never
   token: Route extends 'auth/login' | 'auth/refresh' ? string : never
+  settings: Route extends 'update-settings' ? SettingsType : never
 }
 
 class APIClass {
@@ -123,6 +133,12 @@ class APIClass {
         this.signOut()
         return false
       })
+  }
+
+  updateSettings(settings: SettingsType): Promise<SettingsType> {
+    return this.fetcher('update-settings', { settings }).then(
+      (data) => data.settings
+    )
   }
 
   async setupMqtt(): Promise<WebSocket | undefined> {
