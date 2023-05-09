@@ -31,6 +31,10 @@ const TextFieldWrapper = styled(Box)<{ error?: string }>`
     left: 0;
   }
 
+  input {
+    width: 100%;
+  }
+
   legend {
     visibility: hidden;
     font-size: 0.65em;

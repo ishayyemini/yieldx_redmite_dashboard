@@ -7,6 +7,7 @@ import GlobalStyle, { theme } from './components/app/GlobalStyle'
 import SignIn, { signInAction } from './components/auth/SignIn'
 import Devices from './components/Devices'
 import DeviceView, { deviceUpdateAction } from './components/DeviceView'
+import Settings, { updateSettingsAction } from './components/Settings'
 
 const router = createBrowserRouter([
   {
@@ -18,6 +19,11 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <Devices /> },
           { path: ':id', element: <DeviceView />, action: deviceUpdateAction },
+          {
+            path: 'settings',
+            element: <Settings />,
+            action: updateSettingsAction,
+          },
         ],
       },
       {

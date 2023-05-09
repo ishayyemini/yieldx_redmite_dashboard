@@ -18,8 +18,8 @@ export type DeviceType = {
   lastSens?: Date
 }
 
-type SettingsType = {
-  testField: string
+export type SettingsType = {
+  mqtt?: string
 }
 
 type APIConfigType = {
@@ -35,7 +35,7 @@ type APIRoute =
   | 'update-settings'
 type APIResponse<Route> = {
   user: Route extends 'auth/login' | 'user'
-    ? { username: string; id: string }
+    ? { username: string; id: string; settings?: SettingsType }
     : never
   token: Route extends 'auth/login' | 'auth/refresh' ? string : never
   settings: Route extends 'update-settings' ? SettingsType : never
@@ -90,7 +90,7 @@ class APIClass {
       async (data) => {
         this._config.user = data.user
         this._config.token = data.token
-        this._client = await this.setupMqtt()
+        await this.setupMqtt()
         return this._config.user
       }
     )
@@ -113,7 +113,7 @@ class APIClass {
     return await this.fetcher('user')
       .then(async (data) => {
         this._config.user = data.user
-        if (!this._client) this._client = await this.setupMqtt()
+        if (!this._client) await this.setupMqtt()
         return this._config.user
       })
       .catch((err) => {
@@ -137,12 +137,20 @@ class APIClass {
 
   updateSettings(settings: SettingsType): Promise<SettingsType> {
     return this.fetcher('update-settings', { settings }).then(
-      (data) => data.settings
+      ({ settings }) => {
+        this._setGlobalState((oldCtx) => ({
+          ...oldCtx,
+          user: { ...oldCtx.user, settings },
+        }))
+        return settings
+      }
     )
   }
 
   async setupMqtt(): Promise<WebSocket | undefined> {
     if (this._config.token) {
+      this._setGlobalState((oldCtx) => ({ ...oldCtx, devices: {} }))
+
       const token = this._config.token
       const ws = new WebSocket(`wss://${this._url}/mqtt`)
       let authorized = false
@@ -182,6 +190,7 @@ class APIClass {
         console.log(msg)
       }
 
+      this._client = ws
       return ws
     }
   }
