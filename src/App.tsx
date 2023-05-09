@@ -26,7 +26,6 @@ const App = () => {
 
   useEffect(() => {
     API.configure(setGlobalState)
-    API.subscribeToRM()
   }, [])
 
   const navigate = useNavigate()

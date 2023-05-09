@@ -1,26 +1,6 @@
-import mqtt from 'mqtt/dist/mqtt'
 import jwt_decode, { JwtPayload } from 'jwt-decode'
 
 import { UpdateContextType } from './GlobalContext'
-
-type MQTTDeviceType = {
-  TS: number
-  STRT: number
-  END: number
-  DETCT: number
-  TRND: number
-  BSTAT: 'OK' | 'High' | 'Low'
-  Customer: string
-}
-
-type MQTTSensDataType = {
-  BoardID: string
-  Location: string
-  House: string
-  InHouseLoc: string
-  Contact: string
-  Customer: string
-}
 
 export type DeviceType = {
   id: string
@@ -41,12 +21,6 @@ export type DeviceType = {
 type APIConfigType = {
   user?: { username?: string; id?: string }
   token?: string
-  mqtt: {
-    server: string
-    port: number
-    secPort: number
-    basePath: string
-  }
 }
 
 type APIRoute = 'auth/login' | 'auth/logout' | 'auth/refresh' | 'user'
@@ -57,22 +31,14 @@ type APIResponse<Route> = {
   token: Route extends 'auth/login' | 'auth/refresh' ? string : never
 }
 
-const adminUsers = ['ishay2', 'lior', 'amit']
-
 class APIClass {
   _config: APIConfigType = {
     user: undefined,
     token: undefined,
-    mqtt: {
-      server: 'broker.hivemq.com',
-      port: 8000,
-      secPort: 8884,
-      basePath: 'mqtt',
-    },
   }
   _setGlobalState: UpdateContextType = () => null
   _url: string = 'api.yieldx-biosec.com'
-  _client: mqtt.MqttClient | null = null
+  _client: WebSocket | undefined
   _subscribed: boolean = false
 
   configure(setGlobalState?: UpdateContextType) {
@@ -127,8 +93,8 @@ class APIClass {
         this._config.user = {}
         this._config.token = undefined
         this._subscribed = false
-        this._client?.end()
-        this._client = null
+        this._client?.close()
+        this._client = undefined
       })
   }
 
@@ -136,7 +102,6 @@ class APIClass {
     if (this._config.user) return this._config.user
     return await this.fetcher('user')
       .then(async (data) => {
-        console.log(data)
         this._config.user = data.user
         if (!this._client) this._client = await this.setupMqtt()
         return this._config.user
@@ -160,133 +125,48 @@ class APIClass {
       })
   }
 
-  async setupMqtt(): Promise<mqtt.MqttClient> {
+  async setupMqtt(): Promise<WebSocket | undefined> {
     if (this._config.token) {
       const token = this._config.token
-      let ws = new WebSocket(`wss://${this._url}/echo`)
+      const ws = new WebSocket(`wss://${this._url}/mqtt`)
       let authorized = false
+
       ws.onopen = () => {
         ws.send(token)
       }
       ws.onmessage = (msg) => {
         if (!authorized && msg.data === 'authorized') authorized = true
-        console.log(msg)
+        else if (authorized) {
+          const data = JSON.parse(msg.data)
+          ;[
+            'start',
+            'end',
+            'trained',
+            'detection',
+            'lastSens',
+            'lastUpdated',
+          ].forEach((key) => (data[key] = data[key] ? new Date(data[key]) : 0))
+
+          this._setGlobalState((oldCtx) => ({
+            ...oldCtx,
+            devices: {
+              ...(oldCtx.devices ?? {}),
+              [data.id]: {
+                ...(oldCtx.devices?.[data.id] ?? {}),
+                ...data,
+              },
+            },
+          }))
+        }
       }
       ws.onerror = (err) => {
         console.log(err)
       }
       ws.onclose = (msg) => {
         console.log(msg)
-        console.log('closed')
       }
 
-      setTimeout(() => {
-        if (authorized) ws.send('hey')
-      }, 5000)
-    }
-
-    return new Promise((resolve, reject) => {
-      let { server, port, basePath } = this._config.mqtt
-      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-      if (protocol === 'wss') port = this._config.mqtt.secPort
-      const client = mqtt.connect(`${protocol}://${server}:${port}/${basePath}`)
-      const timeout = setTimeout(() => {
-        console.error('Failed to connect')
-        client.end()
-        reject('Connection timed out')
-      }, 5000)
-      client.on('connect', () => {
-        clearTimeout(timeout)
-        resolve(client)
-      })
-      client.on('error', (err) => {
-        console.error('Connection error: ', err)
-        client.end()
-        reject(err)
-      })
-      window.onbeforeunload = () => {
-        client.end()
-      }
-    })
-  }
-
-  subscribeToRM() {
-    if (this._client && !this._subscribed) {
-      this._subscribed = true
-      this._setGlobalState((oldCtx) => ({ ...oldCtx, devices: {} }))
-      this._client.subscribe(['YIELDX/STAT/RM/#', 'sensdata/#'])
-      this._client.on('message', (topic, payload) => {
-        if (topic.startsWith('YIELDX/STAT/RM/'))
-          try {
-            const parsed: MQTTDeviceType = JSON.parse(payload.toString())
-            if (
-              parsed.Customer === this._config.user?.username ||
-              adminUsers.includes(this._config.user?.username ?? '')
-            ) {
-              const device: DeviceType = {
-                id: topic.split('/')[3],
-                start: parsed.STRT ? new Date(parsed.STRT * 1000) : 0,
-                end: parsed.END ? new Date(parsed.END * 1000) : 0,
-                detection: parsed.DETCT ? new Date(parsed.DETCT * 1000) : 0,
-                trained: parsed.TRND ? new Date(parsed.TRND * 1000) : 0,
-                battery: parsed.BSTAT === 'Low' ? 'Low' : 'Ok',
-                lastUpdated: new Date(parsed.TS * 1000),
-              }
-              this._setGlobalState((oldCtx) => ({
-                ...oldCtx,
-                devices: {
-                  ...(oldCtx.devices ?? {}),
-                  [device.id]: {
-                    ...(oldCtx.devices?.[device.id] ?? {}),
-                    ...device,
-                  },
-                },
-              }))
-            }
-          } catch {
-            console.error('Cannot parse mqtt message')
-          }
-        if (topic.startsWith('sensdata/'))
-          try {
-            const parsed: MQTTSensDataType = JSON.parse(payload.toString())
-            if (
-              parsed.Customer === this._config.user?.username ||
-              adminUsers.includes(this._config.user?.username ?? '')
-            ) {
-              const id = topic.split('/')[1]
-              const time = new Date(topic.split('/')[2])
-              const {
-                Location: location,
-                House: house,
-                InHouseLoc: inHouseLoc,
-                Customer: customer,
-                Contact: contact,
-              } = parsed
-              this._setGlobalState((oldCtx) => {
-                if ((oldCtx.devices?.[id]?.lastSens ?? 0) < time)
-                  return {
-                    ...oldCtx,
-                    devices: {
-                      ...(oldCtx.devices ?? {}),
-                      [id]: {
-                        id,
-                        ...(oldCtx.devices?.[id] ?? {}),
-                        lastSens: time,
-                        location,
-                        house,
-                        inHouseLoc,
-                        customer,
-                        contact,
-                      },
-                    },
-                  }
-                else return oldCtx
-              })
-            }
-          } catch {
-            console.error('Cannot parse mqtt message')
-          }
-      })
+      return ws
     }
   }
 }
