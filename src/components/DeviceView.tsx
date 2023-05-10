@@ -10,7 +10,6 @@ import {
 
 import { Loader, TextField } from './app/AppComponents'
 import GlobalContext from '../data/GlobalContext'
-import { DeviceType } from '../data/API'
 
 export const deviceUpdateAction: ActionFunction = async (args) => {
   const data = await args.request.formData()
@@ -23,17 +22,17 @@ export const deviceUpdateAction: ActionFunction = async (args) => {
 }
 
 const DeviceView = () => {
-  const { id } = useParams()
+  const { id } = useParams() as { id: string }
   const { devices } = useContext(GlobalContext)
 
   const [loading, toggleLoading] = useState(false)
 
   const navigate = useNavigate()
 
-  const device = (id && devices?.[id]) || ({ id } as DeviceType)
+  const device = devices?.[id]
 
-  return (
-    <Card width={{ max: '400px' }}>
+  return device ? (
+    <Card width={{ max: '400px' }} alignSelf={'center'}>
       <Form
         action={`/${id}`}
         method={'POST'}
@@ -71,19 +70,91 @@ const DeviceView = () => {
                 />
                 <TextField label={'Comment'} name={'comment'} />
               </Box>
-              <Heading level={4} margin={'none'}>
-                Technical configuration
-              </Heading>
-              <Box direction={'row'} gap={'small'}>
-                <TextField label={'On Period'} name={'onPeriod'} />
-                <TextField label={'On Period Det'} name={'onPeriodDet'} />
+
+              <Box border={'bottom'} pad={{ bottom: 'small' }} gap={'small'}>
+                <Heading level={4} margin={'none'}>
+                  Training Cycle
+                </Heading>
+                <TextField
+                  label={'Pre Open Lid [mins]'}
+                  name={'preOpen'}
+                  defaultValue={device.conf.training.preOpen}
+                />
+                <TextField
+                  label={'Vent Duration [secs]'}
+                  name={'ventDur'}
+                  defaultValue={device.conf.training.ventDur}
+                />
+                <Box direction={'row'} gap={'small'}>
+                  <TextField
+                    label={'Measure [mins]'}
+                    name={'on1'}
+                    defaultValue={device.conf.training.on1}
+                  />
+                  <TextField
+                    label={'Sleep [secs]'}
+                    name={'sleep1'}
+                    defaultValue={device.conf.training.sleep1}
+                  />
+                </Box>
+                <TextField
+                  label={'Total Duration [mins]'}
+                  name={'train'}
+                  defaultValue={device.conf.training.train}
+                />
               </Box>
-              <TextField label={'Train'} name={'train'} />
-              <Box direction={'row'} gap={'small'}>
-                <TextField label={'Sleep Period'} name={'sleepPeriod'} />
-                <TextField label={'Sleep Period Det'} name={'sleepPeriodDet'} />
+
+              <Box border={'bottom'} pad={{ bottom: 'small' }} gap={'small'}>
+                <Heading level={4} margin={'none'}>
+                  Daily Detection
+                </Heading>
+                <TextField
+                  label={'Open Lid [HH:MM]'}
+                  name={'open1'}
+                  // type={'time'}
+                  defaultValue={device.conf.daily.open1}
+                />
+                <TextField
+                  label={'Close Lid [HH:MM]'}
+                  name={'close1'}
+                  // type={'time'}
+                  defaultValue={device.conf.daily.close1}
+                />
               </Box>
-              <TextField label={'Ventilation Duration'} name={'ventDur'} />
+
+              <Box border={'bottom'} pad={{ bottom: 'small' }} gap={'small'}>
+                <Heading level={4} margin={'none'}>
+                  Detection Cycle
+                </Heading>
+                <TextField
+                  label={'Start [HH:MM]'}
+                  name={'startDet'}
+                  // type={'time'}
+                  defaultValue={device.conf.detection.startDet}
+                />
+                <TextField
+                  label={'Run Vent [secs]'}
+                  name={'vent2'}
+                  defaultValue={device.conf.detection.vent2}
+                />
+                <Box direction={'row'} gap={'small'}>
+                  <TextField
+                    label={'Measure [mins]'}
+                    name={'on2'}
+                    defaultValue={device.conf.detection.on2}
+                  />
+                  <TextField
+                    label={'Sleep [secs]'}
+                    name={'sleep2'}
+                    defaultValue={device.conf.detection.sleep2}
+                  />
+                </Box>
+                <TextField
+                  label={'Total Duration [mins]'}
+                  name={'detect'}
+                  defaultValue={device.conf.detection.detect}
+                />
+              </Box>
             </Box>
             <Box direction={'row'} gap={'medium'}>
               <Button label={'Cancel'} onClick={() => navigate(-1)} secondary />
@@ -102,7 +173,7 @@ const DeviceView = () => {
         </Stack>
       </Form>
     </Card>
-  )
+  ) : null
 }
 
 export default DeviceView

@@ -10,12 +10,14 @@ const calcStatus = (device: DeviceType): string => {
   let status: string
   const timeAgo = new TimeAgo('en-GB')
   const time = (t: Date) => timeAgo.format(t).replace('ago', '')
-  if (!device.start) status = 'Idle'
-  else if (!device.end) status = `In training for ${time(device.start)}`
-  else if (!device.trained) status = 'Training data done'
-  else if (!device.detection)
-    status = `System in detection for ${time(device.trained)}`
-  else status = `Last detection attempt ${timeAgo.format(device.detection)}`
+  if (!device.status.start) status = 'Idle'
+  else if (!device.status.end)
+    status = `In training for ${time(device.status.start)}`
+  else if (!device.status.trained) status = 'Training data done'
+  else if (!device.status.detection)
+    status = `System in detection for ${time(device.status.trained)}`
+  else
+    status = `Last detection attempt ${timeAgo.format(device.status.detection)}`
   return status
 }
 
@@ -36,40 +38,42 @@ const Devices = () => {
           render: (datum) => (
             <Box
               background={
-                datum.battery === 'Ok' ? 'var(--primary)' : 'var(--error)'
+                datum.status.battery === 'Ok'
+                  ? 'var(--primary)'
+                  : 'var(--error)'
               }
               align={'center'}
               pad={'xsmall'}
               fill
             >
-              <Text color={'var(--on-primary)'}>{datum.battery}</Text>
+              <Text color={'var(--on-primary)'}>{datum.status.battery}</Text>
             </Box>
           ),
         },
         {
           property: 'start',
           header: 'Start',
-          render: (datum) => datum.start?.toLocaleString(),
+          render: (datum) => datum.status.start.toLocaleString(),
         },
         {
           property: 'end',
           header: 'End',
-          render: (datum) => datum.end?.toLocaleString(),
+          render: (datum) => datum.status.end.toLocaleString(),
         },
         {
           property: 'trained',
           header: 'Trained',
-          render: (datum) => datum.trained?.toLocaleString(),
+          render: (datum) => datum.status.trained.toLocaleString(),
         },
         {
           property: 'detection',
           header: 'Detection',
-          render: (datum) => datum.detection?.toLocaleString(),
+          render: (datum) => datum.status.detection.toLocaleString(),
         },
         {
           property: 'lastUpdated',
           header: 'LastUpdated',
-          render: (datum) => datum.lastUpdated?.toLocaleString(),
+          render: (datum) => datum.lastUpdated.toLocaleString(),
         },
         {
           property: 'status',

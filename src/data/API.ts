@@ -4,18 +4,39 @@ import { UpdateContextType } from './GlobalContext'
 
 export type DeviceType = {
   id: string
-  battery?: 'Ok' | 'Low'
-  start?: Date | 0
-  end?: Date | 0
-  trained?: Date | 0
-  detection?: Date | 0
-  location?: string
-  house?: string
-  inHouseLoc?: string
-  customer?: string
-  contact?: string
-  lastUpdated?: Date
-  lastSens?: Date
+  location: string
+  house: string
+  inHouseLoc: string
+  customer: string
+  contact: string
+  status: {
+    battery: 'Ok' | 'Low'
+    start: Date | 0
+    end: Date | 0
+    trained: Date | 0
+    detection: Date | 0
+  }
+  conf: {
+    training: {
+      preOpen: number
+      ventDur: number
+      on1: number
+      sleep1: number
+      train: number
+    }
+    daily: {
+      open1: string
+      close1: string
+    }
+    detection: {
+      startDet: string
+      vent2: number
+      on2: number
+      sleep2: number
+      detect: number
+    }
+  }
+  lastUpdated: Date
 }
 
 export type SettingsType = {
@@ -179,15 +200,20 @@ class APIClass {
       ws.onmessage = (msg) => {
         if (!authorized && msg.data === 'authorized') authorized = true
         else if (authorized) {
-          const data = JSON.parse(msg.data)
-          ;[
-            'start',
-            'end',
-            'trained',
-            'detection',
-            'lastSens',
-            'lastUpdated',
-          ].forEach((key) => (data[key] = data[key] ? new Date(data[key]) : 0))
+          const data = JSON.parse(msg.data, (key, value) =>
+            [
+              'start',
+              'end',
+              'trained',
+              'detection',
+              'lastSens',
+              'lastUpdated',
+            ].includes(key) &&
+            !isNaN(value) &&
+            value !== 0
+              ? new Date(value)
+              : value
+          )
 
           this._setGlobalState((oldCtx) => ({
             ...oldCtx,
