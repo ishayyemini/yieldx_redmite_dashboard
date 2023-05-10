@@ -52,7 +52,10 @@ class APIClass {
     token: undefined,
   }
   _setGlobalState: UpdateContextType = () => null
-  _url: string = 'api.yieldx-biosec.com'
+  _url: string =
+    process.env.NODE_ENV === 'development'
+      ? 'localhost:4000'
+      : 'api.yieldx-biosec.com'
   _client: WebSocket | undefined
   _subscribed: boolean = false
 
@@ -74,15 +77,20 @@ class APIClass {
         throw new Error('Unauthorized')
     }
 
-    return fetch(`https://${this._url}/${route}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this._config.token}`,
-      },
-      body: body ? JSON.stringify(body) : undefined,
-      credentials: 'include',
-    })
+    return fetch(
+      `${process.env.NODE_ENV === 'development' ? 'http' : 'https'}://${
+        this._url
+      }/${route}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this._config.token}`,
+        },
+        body: body ? JSON.stringify(body) : undefined,
+        credentials: 'include',
+      }
+    )
       .then((res) => res.json())
       .then((res) => {
         if (res?.data) return res.data
@@ -158,7 +166,11 @@ class APIClass {
       this._setGlobalState((oldCtx) => ({ ...oldCtx, devices: {} }))
 
       const token = this._config.token
-      const ws = new WebSocket(`wss://${this._url}/mqtt`)
+      const ws = new WebSocket(
+        `${process.env.NODE_ENV === 'development' ? 'ws' : 'wss'}://${
+          this._url
+        }/mqtt`
+      )
       let authorized = false
 
       ws.onopen = () => {
