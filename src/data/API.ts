@@ -39,6 +39,26 @@ export type DeviceType = {
   lastUpdated: Date
 }
 
+export type DeviceUpdateType = {
+  location: string
+  house: string
+  inHouseLoc: string
+  contact: string
+  comment: string
+  preOpen: number
+  ventDur: number
+  on1: number
+  sleep1: number
+  train: number
+  open1: string
+  close1: string
+  startDet: string
+  vent2: number
+  on2: number
+  sleep2: number
+  detect: number
+}
+
 export type SettingsType = {
   mqtt?: string
 }
@@ -61,6 +81,7 @@ type APIRoute =
   | 'auth/refresh'
   | 'user'
   | 'update-settings'
+  | 'update-device-conf'
 type APIResponse<Route> = {
   user: Route extends 'auth/login' | 'user' ? UserType : never
   token: Route extends 'auth/login' | 'auth/refresh' ? string : never
@@ -155,6 +176,10 @@ class APIClass {
         this._config.user = {}
         return this._config.user
       })
+  }
+
+  async updateDeviceConf(id: string, conf: DeviceUpdateType) {
+    return await this.fetcher('update-device-conf', { id, ...conf })
   }
 
   async refreshTokens() {

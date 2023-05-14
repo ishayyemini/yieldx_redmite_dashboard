@@ -1,31 +1,55 @@
-import { useContext, useState } from 'react'
-import { Box, Button, Card, Heading, Stack } from 'grommet'
+import { useContext, useEffect, useState } from 'react'
+import { Box, Button, Card, Heading, Stack, Text } from 'grommet'
 import {
   ActionFunction,
   Form,
   redirect,
+  useActionData,
   useNavigate,
   useParams,
 } from 'react-router-dom'
 
 import { Loader, TextField } from './app/AppComponents'
 import GlobalContext from '../data/GlobalContext'
+import API, { DeviceUpdateType } from '../data/API'
 
 export const deviceUpdateAction: ActionFunction = async (args) => {
-  const data = await args.request.formData()
-  const Contact = data.get('contact')
-  console.log(Contact)
+  const data = Object.fromEntries(
+    [...(await args.request.formData())].map(([key, value]) => [
+      key,
+      [
+        'preOpen',
+        'ventDur',
+        'on1',
+        'sleep1',
+        'train',
+        'vent2',
+        'on2',
+        'sleep2',
+        'detect',
+      ].includes(key)
+        ? +value
+        : value,
+    ])
+  ) as DeviceUpdateType
 
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  return redirect('/')
+  if (args.params.id)
+    return await API.updateDeviceConf(args.params.id, data)
+      .then(() => redirect('/'))
+      .catch((e) => e.message)
+  else return redirect('/')
 }
 
 const DeviceView = () => {
   const { id } = useParams() as { id: string }
+  const error = useActionData() as string
   const { devices } = useContext(GlobalContext)
 
   const [loading, toggleLoading] = useState(false)
+
+  useEffect(() => {
+    toggleLoading(false)
+  }, [error])
 
   const navigate = useNavigate()
 
@@ -111,13 +135,13 @@ const DeviceView = () => {
                 <TextField
                   label={'Open Lid [HH:MM]'}
                   name={'open1'}
-                  // type={'time'}
+                  type={'time'}
                   defaultValue={device.conf.daily.open1}
                 />
                 <TextField
                   label={'Close Lid [HH:MM]'}
                   name={'close1'}
-                  // type={'time'}
+                  type={'time'}
                   defaultValue={device.conf.daily.close1}
                 />
               </Box>
@@ -129,7 +153,7 @@ const DeviceView = () => {
                 <TextField
                   label={'Start [HH:MM]'}
                   name={'startDet'}
-                  // type={'time'}
+                  type={'time'}
                   defaultValue={device.conf.detection.startDet}
                 />
                 <TextField
@@ -156,6 +180,13 @@ const DeviceView = () => {
                 />
               </Box>
             </Box>
+
+            {error ? (
+              <Text color={'status-error'} margin={{ bottom: 'medium' }}>
+                {error ?? ''}
+              </Text>
+            ) : null}
+
             <Box direction={'row'} gap={'medium'}>
               <Button label={'Cancel'} onClick={() => navigate(-1)} secondary />
               <Button label={'Update'} type={'submit'} primary />
