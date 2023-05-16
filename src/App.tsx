@@ -6,7 +6,7 @@ import {
   useLoaderData,
   useNavigate,
 } from 'react-router-dom'
-import { Button, Card, Main } from 'grommet'
+import { Box, Button, Card, Main } from 'grommet'
 
 import GlobalContext, { ContextType } from './data/GlobalContext'
 import API, { UserType } from './data/API'
@@ -35,27 +35,22 @@ const App = () => {
       value={{ ...globalState, updateContext: setGlobalState }}
     >
       <Main>
-        <Card
-          direction={'row'}
-          gap={'small'}
-          justify={'between'}
-          align={'center'}
-        >
-          <>
-            We are logged in! User {user.username} ID {user.id}
-          </>
-          {user.admin ? (
+        <Card direction={'row'} justify={'between'} align={'center'}>
+          <>{user.username}</>
+          <Box direction={'row'} gap={'medium'}>
+            {user.admin ? (
+              <Button
+                label={'Settings'}
+                onClick={() => navigate('/settings')}
+                primary
+              />
+            ) : null}
             <Button
-              label={'Settings'}
-              onClick={() => navigate('/settings')}
-              primary
+              label={'Logout'}
+              onClick={() => API.signOut().then(() => navigate('/login'))}
+              secondary
             />
-          ) : null}
-          <Button
-            label={'Logout'}
-            onClick={() => API.signOut().then(() => navigate('/login'))}
-            secondary
-          />
+          </Box>
         </Card>
         <Outlet />
       </Main>

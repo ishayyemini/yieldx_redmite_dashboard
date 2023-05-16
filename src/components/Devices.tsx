@@ -1,5 +1,13 @@
-import { useContext } from 'react'
-import { Box, DataTable, Text } from 'grommet'
+import { useContext, useState } from 'react'
+import {
+  Box,
+  Button,
+  Card,
+  Collapsible,
+  DataTable,
+  ResponsiveContext,
+  Text,
+} from 'grommet'
 import TimeAgo from 'javascript-time-ago'
 import { useNavigate } from 'react-router'
 
@@ -23,10 +31,78 @@ const calcStatus = (device: DeviceType): string => {
 
 const Devices = () => {
   const { devices, user } = useContext(GlobalContext)
+  const size = useContext(ResponsiveContext)
+
+  const [open, setOpen] = useState(
+    Object.fromEntries(Object.keys(devices ?? {}).map((id) => [id, false]))
+  )
 
   const navigate = useNavigate()
 
-  return (
+  return size === 'small' ? (
+    <>
+      {Object.values(devices ?? {}).map((item, index) => (
+        <Box
+          fill={'horizontal'}
+          border={'bottom'}
+          background={`var(--md-ref-palette-neutral${index % 2 ? '95' : '98'})`}
+          pad={'small'}
+          onClick={() =>
+            setOpen((oldOpen) => ({ ...oldOpen, [item.id]: !oldOpen[item.id] }))
+          }
+          key={item.id}
+        >
+          {['lior', 'amit', 'ishay2'].includes(user?.username ?? '') ? (
+            <Text weight={'bold'} size={'small'}>
+              Device ID: {item.id}
+            </Text>
+          ) : null}
+          <Box direction={'row'} align={'center'} justify={'between'}>
+            <Text>
+              {item.location + ' -> ' + item.house + ' -> ' + item.inHouseLoc}
+            </Text>
+            <Box
+              background={
+                item.status.battery === 'Ok' ? 'var(--primary)' : 'var(--error)'
+              }
+              pad={'xsmall'}
+            >
+              <Text size={'small'} color={'var(--on-primary)'}>
+                Battery {item.status.battery}
+              </Text>
+            </Box>
+          </Box>
+          <Text weight={'bold'}>Status: {calcStatus(item)}</Text>
+          <Collapsible open={open[item.id]}>
+            <Card gap={'small'}>
+              <Box gap={'small'} direction={'row'}>
+                <Box>
+                  <Text>Start: </Text>
+                  <Text>End: </Text>
+                  <Text>Trained: </Text>
+                  <Text>Detection: </Text>
+                  <Text>Last Updated:</Text>
+                </Box>
+                <Box>
+                  <Text>{item.status.start.toLocaleString()}</Text>
+                  <Text>{item.status.end.toLocaleString()}</Text>
+                  <Text>{item.status.trained.toLocaleString()}</Text>
+                  <Text>{item.status.detection.toLocaleString()}</Text>
+                  <Text>{item.lastUpdated.toLocaleString()}</Text>
+                </Box>
+              </Box>
+              <Button
+                label={'Edit Configuration'}
+                onClick={() => navigate(item.id)}
+                alignSelf={'center'}
+                primary
+              />
+            </Card>
+          </Collapsible>
+        </Box>
+      ))}
+    </>
+  ) : (
     <DataTable
       columns={[
         ...(['lior', 'amit', 'ishay2'].includes(user?.username ?? '')
@@ -75,7 +151,7 @@ const Devices = () => {
         },
         {
           property: 'lastUpdated',
-          header: 'LastUpdated',
+          header: 'Last Updated',
           render: (datum) => datum.lastUpdated.toLocaleString(),
         },
         {
