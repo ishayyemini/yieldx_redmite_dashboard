@@ -43,7 +43,7 @@ export const deviceUpdateAction: ActionFunction = async (args) => {
 const DeviceView = () => {
   const { id } = useParams() as { id: string }
   const error = useActionData() as string
-  const { devices } = useContext(GlobalContext)
+  const { devices, user } = useContext(GlobalContext)
 
   const [loading, toggleLoading] = useState(false)
 
@@ -70,6 +70,11 @@ const DeviceView = () => {
             <Heading level={3} margin={'none'}>
               Update Configuration
             </Heading>
+            {['lior', 'amit', 'ishay2'].includes(user?.username ?? '') ? (
+              <Heading level={5} margin={'xsmall'}>
+                Device ID: {device.id}
+              </Heading>
+            ) : null}
             <Box gap={'small'} margin={{ vertical: 'medium' }} fill>
               <Box border={'bottom'} pad={{ bottom: 'small' }} gap={'small'}>
                 <TextField

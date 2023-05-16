@@ -22,13 +22,16 @@ const calcStatus = (device: DeviceType): string => {
 }
 
 const Devices = () => {
-  const { devices } = useContext(GlobalContext)
+  const { devices, user } = useContext(GlobalContext)
 
   const navigate = useNavigate()
 
   return (
     <DataTable
       columns={[
+        ...(['lior', 'amit', 'ishay2'].includes(user?.username ?? '')
+          ? [{ property: 'id', header: 'Device ID' }]
+          : []),
         { property: 'location', header: 'Location' },
         { property: 'house', header: 'House' },
         { property: 'inHouseLoc', header: 'In House Location' },
