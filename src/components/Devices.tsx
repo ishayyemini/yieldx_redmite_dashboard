@@ -74,13 +74,13 @@ const Devices = () => {
           </Box>
           <Text weight={'bold'}>Status: {calcStatus(item)}</Text>
           <Collapsible open={open[item.id]}>
-            <Card gap={'small'}>
+            <Card gap={'small'} width={'fit-content'} alignSelf={'center'}>
               <Box gap={'small'} direction={'row'}>
                 <Box>
                   <Text>Start: </Text>
                   <Text>End: </Text>
                   <Text>Trained: </Text>
-                  <Text>Detection: </Text>
+                  <Text>Last Inspection: </Text>
                   <Text>Last Updated:</Text>
                 </Box>
                 <Box>
@@ -146,7 +146,7 @@ const Devices = () => {
         },
         {
           property: 'detection',
-          header: 'Detection',
+          header: 'Last Inspection',
           render: (datum) => datum.status.detection.toLocaleString(),
         },
         {
