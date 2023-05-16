@@ -96,7 +96,7 @@ class APIClass {
   _setGlobalState: UpdateContextType = () => null
   _url: string =
     process.env.NODE_ENV === 'development'
-      ? 'localhost:4000'
+      ? `${window.location.hostname}:4000`
       : 'api.yieldx-biosec.com'
   _client: WebSocket | undefined
   _subscribed: boolean = false
