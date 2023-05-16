@@ -15,17 +15,44 @@ import GlobalContext from '../data/GlobalContext'
 import { DeviceType } from '../data/API'
 
 const calcStatus = (device: DeviceType): string => {
-  let status: string
-  const timeAgo = new TimeAgo('en-GB')
-  const time = (t: Date) => timeAgo.format(t).replace('ago', '')
-  if (!device.status.start) status = 'Idle'
-  else if (!device.status.end)
-    status = `In training for ${time(device.status.start)}`
-  else if (!device.status.trained) status = 'Training data done'
-  else if (!device.status.detection)
-    status = `System in detection for ${time(device.status.trained)}`
-  else
-    status = `Last detection attempt ${timeAgo.format(device.status.detection)}`
+  let status
+  const time = (t: Date | number) =>
+    new TimeAgo('en-GB').format(t).replace(' ago', '').replace('just ', '')
+  const timeByHour = (s: string, ago: boolean = false) => {
+    const [hour, min] = s.split(':')
+    let date = new Date().setHours(+hour, +min)
+    if (date < Date.now() && !ago) date += 24 * 60 * 60 * 1000
+    return time(date)
+  }
+
+  switch (device.status.mode) {
+    case 'PreOpen Lid':
+      const pOpenTime =
+        device.lastUpdated.getTime() + device.conf.training.preOpen * 60000
+      status = `Starting ${pOpenTime < Date.now() ? 'now' : time(pOpenTime)}`
+      break
+    case 'Training':
+      status = `Training in progress for ${time(device.status.start)}`
+      break
+    case 'Lid Closed Daily-Cycle Done':
+      status = `Return to operation ${timeByHour(device.conf.daily.open1)}`
+      break
+    case 'Lid Opened Idling':
+      status = `Closing Lid ${timeByHour(device.conf.daily.close1)}`
+      break
+    case 'Lid Closed Idling':
+      status = `Detecting ${timeByHour(device.conf.detection.startDet)}`
+      break
+    case 'Detecting':
+      status = `Detecting in progress for ${timeByHour(
+        device.conf.detection.startDet,
+        true
+      )}`
+      break
+    default:
+      status = device.status.mode
+  }
+
   return status
 }
 
@@ -38,6 +65,8 @@ const Devices = () => {
   )
 
   const navigate = useNavigate()
+
+  const admin = ['lior', 'amit', 'ishay2'].includes(user?.username ?? '')
 
   return size === 'small' ? (
     <>
@@ -52,10 +81,13 @@ const Devices = () => {
           }
           key={item.id}
         >
-          {['lior', 'amit', 'ishay2'].includes(user?.username ?? '') ? (
-            <Text weight={'bold'} size={'small'}>
-              Device ID: {item.id}
-            </Text>
+          {admin ? (
+            <Box direction={'row'} justify={'between'}>
+              <Text weight={'bold'} size={'small'}>
+                Device ID: {item.id}
+              </Text>
+              <Text size={'small'}>{item.customer}</Text>
+            </Box>
           ) : null}
           <Box direction={'row'} align={'center'} justify={'between'}>
             <Text>
@@ -105,8 +137,11 @@ const Devices = () => {
   ) : (
     <DataTable
       columns={[
-        ...(['lior', 'amit', 'ishay2'].includes(user?.username ?? '')
-          ? [{ property: 'id', header: 'Device ID' }]
+        ...(admin
+          ? [
+              { property: 'id', header: 'Device ID' },
+              { property: 'customer', header: 'Customer' },
+            ]
           : []),
         { property: 'location', header: 'Location' },
         { property: 'house', header: 'House' },

@@ -2,6 +2,18 @@ import jwt_decode, { JwtPayload } from 'jwt-decode'
 
 import { UpdateContextType } from './GlobalContext'
 
+type ModeType =
+  | 'Idle'
+  | 'Idle Sleep'
+  | 'PreOpen Lid'
+  | 'Training'
+  | 'Done Training'
+  | 'Lid Closed Daily-Cycle Done'
+  | 'Lid Opened Idling'
+  | 'Lid Closed Idling'
+  | 'Detecting'
+  | 'Report Detect'
+
 export type DeviceType = {
   id: string
   location: string
@@ -15,6 +27,7 @@ export type DeviceType = {
     end: Date | 0
     trained: Date | 0
     detection: Date | 0
+    mode: ModeType
   }
   conf: {
     training: {
