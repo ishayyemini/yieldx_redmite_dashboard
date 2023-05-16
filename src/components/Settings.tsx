@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
-import { Box, Button, Card, Heading, Stack, Text } from 'grommet'
+import { Box, Button, Card, Heading, Select, Stack, Text } from 'grommet'
 import {
   ActionFunction,
   Form,
@@ -8,15 +8,26 @@ import {
   useNavigate,
 } from 'react-router-dom'
 
-import { Loader, TextField } from './app/AppComponents'
+import { Loader } from './app/AppComponents'
 import GlobalContext from '../data/GlobalContext'
 import API from '../data/API'
 
+const mqttServers: { name: string; value: string }[] = [
+  {
+    name: 'Broker Dashboard',
+    value: 'mqtts://broker.hivemq.com:8883',
+  },
+  {
+    name: 'YieldX New Server',
+    value: 'mqtts://3.64.31.133:8884',
+  },
+]
+
 export const updateSettingsAction: ActionFunction = async (args) => {
   const data = await args.request.formData()
-  const mqtt = data.get('mqtt')
+  const mqtt = mqttServers.find((item) => item.name === data.get('mqtt'))?.value
 
-  if (typeof mqtt !== 'string') return 'Bad form'
+  if (!mqtt) return 'Bad form'
 
   return await API.updateSettings({ mqtt })
     .then(() => {
@@ -59,13 +70,17 @@ const Settings = () => {
               Settings
             </Heading>
             <Box fill>
-              <TextField
-                label={'MQTT (protocol://address:port)'}
+              <Text margin={{ bottom: 'xsmall' }}>MQTT Server</Text>
+              <Select
+                options={mqttServers}
                 name={'mqtt'}
+                valueKey={'value'}
+                labelKey={'name'}
                 defaultValue={
-                  user?.settings?.mqtt || 'mqtts://broker.hivemq.com:8883'
+                  mqttServers.find(
+                    (item) => item.value === user?.settings?.mqtt
+                  )?.value || 'mqtts://broker.hivemq.com:8883'
                 }
-                pattern={'mqtts?://[a-z0-9-_.]+:[0-9]{2,4}'}
               />
             </Box>
             <Text color={'status-error'}>{error ?? ''}</Text>
