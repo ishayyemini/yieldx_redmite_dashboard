@@ -337,7 +337,13 @@ const StatusDisplay: FC<{ device: DeviceType }> = ({ device }) => {
       status = device.status.mode
   }
 
-  return <>{status}</>
+  if (moment(device.lastUpdated).diff(moment(), 'days')) status = 'Outdated'
+
+  return (
+    <Text className={status === 'Outdated' ? 'outdated' : undefined}>
+      {status}
+    </Text>
+  )
 }
 
 export { TextField, Loader, CollapsibleSide, ProgressLoader, StatusDisplay }

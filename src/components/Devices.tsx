@@ -9,9 +9,19 @@ import {
   Text,
 } from 'grommet'
 import { useNavigate } from 'react-router'
+import styled from 'styled-components'
 
 import GlobalContext from '../data/GlobalContext'
 import { StatusDisplay } from './app/AppComponents'
+
+const OutdatedWrapper = styled(Box)`
+  tr:has(span.outdated) {
+    opacity: 0.5;
+  }
+  .itemRow:has(span.outdated) {
+    opacity: 0.5;
+  }
+`
 
 const Devices = () => {
   const { devices, user } = useContext(GlobalContext)
@@ -26,7 +36,7 @@ const Devices = () => {
   const admin = ['lior', 'amit', 'ishay2'].includes(user?.username ?? '')
 
   return size === 'small' ? (
-    <>
+    <OutdatedWrapper>
       {Object.values(devices ?? {}).map((item, index) => (
         <Box
           fill={'horizontal'}
@@ -36,6 +46,7 @@ const Devices = () => {
           onClick={() =>
             setOpen((oldOpen) => ({ ...oldOpen, [item.id]: !oldOpen[item.id] }))
           }
+          className={'itemRow'}
           key={item.id}
         >
           {admin ? (
@@ -92,73 +103,75 @@ const Devices = () => {
           </Collapsible>
         </Box>
       ))}
-    </>
+    </OutdatedWrapper>
   ) : (
-    <DataTable
-      columns={[
-        ...(admin
-          ? [
-              { property: 'id', header: 'Device ID' },
-              { property: 'customer', header: 'Customer' },
-            ]
-          : []),
-        { property: 'location', header: 'Location' },
-        { property: 'house', header: 'House' },
-        { property: 'inHouseLoc', header: 'In House Location' },
-        {
-          property: 'battery',
-          header: 'Battery',
-          render: (datum) => (
-            <Box
-              background={
-                datum.status.battery === 'Ok'
-                  ? 'var(--primary)'
-                  : 'var(--error)'
-              }
-              align={'center'}
-              pad={'xsmall'}
-              fill
-            >
-              <Text color={'var(--on-primary)'}>{datum.status.battery}</Text>
-            </Box>
-          ),
-        },
-        {
-          property: 'start',
-          header: 'Start',
-          render: (datum) => datum.status.start.toLocaleString(),
-        },
-        {
-          property: 'end',
-          header: 'End',
-          render: (datum) => datum.status.end.toLocaleString(),
-        },
-        {
-          property: 'trained',
-          header: 'Trained',
-          render: (datum) => datum.status.trained.toLocaleString(),
-        },
-        {
-          property: 'detection',
-          header: 'Last Inspection',
-          render: (datum) => datum.status.detection.toLocaleString(),
-        },
-        {
-          property: 'lastUpdated',
-          header: 'Last Updated',
-          render: (datum) => datum.lastUpdated.toLocaleString(),
-        },
-        {
-          property: 'status',
-          header: 'Status',
-          render: (datum) => <StatusDisplay device={datum} />,
-        },
-      ]}
-      data={Object.values(devices ?? {})}
-      onClickRow={({ datum }) => navigate(datum.id)}
-      primaryKey={'id'}
-      sortable
-    />
+    <OutdatedWrapper>
+      <DataTable
+        columns={[
+          ...(admin
+            ? [
+                { property: 'id', header: 'Device ID' },
+                { property: 'customer', header: 'Customer' },
+              ]
+            : []),
+          { property: 'location', header: 'Location' },
+          { property: 'house', header: 'House' },
+          { property: 'inHouseLoc', header: 'In House Location' },
+          {
+            property: 'battery',
+            header: 'Battery',
+            render: (datum) => (
+              <Box
+                background={
+                  datum.status.battery === 'Ok'
+                    ? 'var(--primary)'
+                    : 'var(--error)'
+                }
+                align={'center'}
+                pad={'xsmall'}
+                fill
+              >
+                <Text color={'var(--on-primary)'}>{datum.status.battery}</Text>
+              </Box>
+            ),
+          },
+          {
+            property: 'start',
+            header: 'Start',
+            render: (datum) => datum.status.start.toLocaleString(),
+          },
+          {
+            property: 'end',
+            header: 'End',
+            render: (datum) => datum.status.end.toLocaleString(),
+          },
+          {
+            property: 'trained',
+            header: 'Trained',
+            render: (datum) => datum.status.trained.toLocaleString(),
+          },
+          {
+            property: 'detection',
+            header: 'Last Inspection',
+            render: (datum) => datum.status.detection.toLocaleString(),
+          },
+          {
+            property: 'lastUpdated',
+            header: 'Last Updated',
+            render: (datum) => datum.lastUpdated.toLocaleString(),
+          },
+          {
+            property: 'status',
+            header: 'Status',
+            render: (datum) => <StatusDisplay device={datum} />,
+          },
+        ]}
+        data={Object.values(devices ?? {})}
+        onClickRow={({ datum }) => navigate(datum.id)}
+        primaryKey={'id'}
+        sortable
+      />
+    </OutdatedWrapper>
   )
 }
 
