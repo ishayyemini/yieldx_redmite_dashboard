@@ -14,59 +14,66 @@ import moment from 'moment'
 import GlobalContext from '../data/GlobalContext'
 import { DeviceType } from '../data/API'
 
+const calcTime = (
+  deadline: string | Date | number | moment.Moment,
+  ago: boolean = false
+): string => {
+  if (typeof deadline === 'string') {
+    const [hour, min] = deadline.split(':')
+    deadline = moment().hour(+hour).minute(+min)
+  }
+
+  const minutes =
+    moment(deadline)
+      .add(!ago && moment().isAfter(moment(deadline)) ? 1 : 0, 'day')
+      .diff(moment(), 'minutes') * (ago ? -1 : 1)
+
+  return (
+    (minutes >= 60
+      ? Math.floor(minutes / 60) + ' hour' + (minutes >= 120 ? 's' : '')
+      : '') +
+    (minutes >= 60 && minutes % 60 ? ' and ' : '') +
+    (minutes % 60
+      ? (minutes % 60) + ' minute' + (minutes % 60 > 1 ? 's' : '')
+      : '')
+  )
+}
+
 const calcStatus = (device: DeviceType): string => {
-  let status
-  const time = (
-    deadline: Date | number | moment.Moment,
-    ago: boolean = false
-  ) => {
-    const minutes =
-      moment(deadline)
-        .add(!ago && moment().isAfter(moment(deadline)) ? 1 : 0, 'day')
-        .diff(moment(), 'minutes') * (ago ? -1 : 1)
-    return minutes
-      ? (minutes >= 60
-          ? Math.floor(minutes / 60) + ' hour' + (minutes >= 120 ? 's' : '')
-          : '') +
-          (minutes >= 60 && minutes % 60 ? ' and ' : '') +
-          (minutes % 60
-            ? (minutes % 60) + ' minute' + (minutes % 60 > 1 ? 's' : '')
-            : '')
-      : 'now'
-  }
-  const timeByHour = (s: string, ago: boolean = false) => {
-    const [hour, min] = s.split(':')
-    const deadline = moment().hour(+hour).minute(+min)
-    return time(deadline, ago)
-  }
+  let time, status
 
   switch (device.status.mode) {
     case 'PreOpen Lid':
-      const pOpenTime =
-        device.lastUpdated.getTime() + device.conf.training.preOpen * 60000
-      status = `Starting ${
-        pOpenTime < Date.now() ? 'now' : 'in ' + time(pOpenTime)
-      }`
+      time = calcTime(
+        moment(device.lastUpdated).add(device.conf.training.preOpen, 'minutes')
+      )
+      status = time ? `Starting in ${time}` : 'Starting'
       break
     case 'Training':
-      status = `Training in progress for ${time(device.status.start, true)}`
+      time = calcTime(device.status.start, true)
+      status = time
+        ? `Training in progress for ${time}`
+        : 'Training started just now'
       break
     case 'Done Training':
     case 'Lid Closed Daily-Cycle Done':
-      status = `Return to operation in ${timeByHour(device.conf.daily.open1)}`
+      time = calcTime(device.conf.daily.open1)
+      status = time ? `Return to operation in ${time}` : 'Starting'
       break
     case 'Lid Opened Idling':
-      status = `Closing Lid in ${timeByHour(device.conf.daily.close1)}`
+      time = calcTime(device.conf.daily.close1)
+      status = time ? `Closing lid in ${time}` : 'Closing lid now'
       break
     case 'Lid Closed Idling':
-      status = `Inspecting in ${timeByHour(device.conf.detection.startDet)}`
+      time = calcTime(device.conf.detection.startDet)
+      status = time ? `Inspecting in ${time}` : 'Starting inspection'
       break
     case 'Inspecting':
     case 'Report Inspection':
-      status = `Inspection in progress for ${timeByHour(
-        device.conf.detection.startDet,
-        true
-      )}`
+      time = calcTime(device.conf.detection.startDet, true)
+      status = time
+        ? `Inspection in progress for ${time}`
+        : 'Inspection started just now'
       break
     default:
       status = device.status.mode
