@@ -11,8 +11,8 @@ type ModeType =
   | 'Lid Closed Daily-Cycle Done'
   | 'Lid Opened Idling'
   | 'Lid Closed Idling'
-  | 'Detecting'
-  | 'Report Detect'
+  | 'Inspecting'
+  | 'Report Inspection'
 
 export type DeviceType = {
   id: string

@@ -8,43 +8,61 @@ import {
   ResponsiveContext,
   Text,
 } from 'grommet'
-import TimeAgo from 'javascript-time-ago'
 import { useNavigate } from 'react-router'
+import moment from 'moment'
 
 import GlobalContext from '../data/GlobalContext'
 import { DeviceType } from '../data/API'
 
 const calcStatus = (device: DeviceType): string => {
   let status
-  const time = (t: Date | number) =>
-    new TimeAgo('en-GB').format(t).replace(' ago', '').replace('just ', '')
+  const time = (
+    deadline: Date | number | moment.Moment,
+    ago: boolean = false
+  ) => {
+    const minutes = moment(deadline)
+      .add(!ago && moment().isAfter(moment(deadline)) ? 1 : 0, 'day')
+      .diff(moment(), 'minutes')
+    return (
+      (minutes >= 60
+        ? Math.floor(minutes / 60) + ' hour' + (minutes >= 120 ? 's' : '')
+        : '') +
+      (minutes >= 60 && minutes % 60 ? ' and ' : '') +
+      (minutes % 60
+        ? (minutes % 60) + ' minute' + (minutes % 60 > 1 ? 's' : '')
+        : '')
+    )
+  }
   const timeByHour = (s: string, ago: boolean = false) => {
     const [hour, min] = s.split(':')
-    let date = new Date().setHours(+hour, +min)
-    if (date < Date.now() && !ago) date += 24 * 60 * 60 * 1000
-    return time(date)
+    const deadline = moment().hour(+hour).minute(+min)
+    return time(deadline, ago)
   }
 
   switch (device.status.mode) {
     case 'PreOpen Lid':
       const pOpenTime =
         device.lastUpdated.getTime() + device.conf.training.preOpen * 60000
-      status = `Starting ${pOpenTime < Date.now() ? 'now' : time(pOpenTime)}`
+      status = `Starting ${
+        pOpenTime < Date.now() ? 'now' : 'in' + time(pOpenTime)
+      }`
       break
     case 'Training':
-      status = `Training in progress for ${time(device.status.start)}`
+      status = `Training in progress for ${time(device.status.start, true)}`
       break
+    case 'Done Training':
     case 'Lid Closed Daily-Cycle Done':
-      status = `Return to operation ${timeByHour(device.conf.daily.open1)}`
+      status = `Return to operation in ${timeByHour(device.conf.daily.open1)}`
       break
     case 'Lid Opened Idling':
-      status = `Closing Lid ${timeByHour(device.conf.daily.close1)}`
+      status = `Closing Lid in ${timeByHour(device.conf.daily.close1)}`
       break
     case 'Lid Closed Idling':
-      status = `Detecting ${timeByHour(device.conf.detection.startDet)}`
+      status = `Inspecting in ${timeByHour(device.conf.detection.startDet)}`
       break
-    case 'Detecting':
-      status = `Detecting in progress for ${timeByHour(
+    case 'Inspecting':
+    case 'Report Inspection':
+      status = `Inspection in progress for ${timeByHour(
         device.conf.detection.startDet,
         true
       )}`
