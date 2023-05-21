@@ -4,6 +4,7 @@ import en from 'javascript-time-ago/locale/en'
 import TimeAgo from 'javascript-time-ago'
 
 import Top from './Top'
+import * as serviceWorker from './serviceWorker'
 
 TimeAgo.addDefaultLocale(en)
 
@@ -13,3 +14,5 @@ root.render(
     <Top />
   </React.StrictMode>
 )
+
+serviceWorker.register()

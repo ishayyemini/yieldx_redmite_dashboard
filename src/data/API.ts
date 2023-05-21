@@ -1,6 +1,7 @@
 import jwt_decode, { JwtPayload } from 'jwt-decode'
 
 import { UpdateContextType } from './GlobalContext'
+import { subscribe } from '../subscription'
 
 type ModeType =
   | 'Idle'
@@ -154,14 +155,17 @@ class APIClass {
   }
 
   async signIn(username: string, password: string) {
-    return await this.fetcher('auth/login', { username, password }).then(
-      async (data) => {
-        this._config.user = data.user
-        this._config.token = data.token
-        await this.setupMqtt()
-        return this._config.user
-      }
-    )
+    const subscription = await subscribe().then((res) => res?.toJSON())
+    return await this.fetcher('auth/login', {
+      username,
+      password,
+      subscription,
+    }).then(async (data) => {
+      this._config.user = data.user
+      this._config.token = data.token
+      await this.setupMqtt()
+      return this._config.user
+    })
   }
 
   async signOut() {
@@ -196,7 +200,8 @@ class APIClass {
   }
 
   async refreshTokens() {
-    return await this.fetcher('auth/refresh')
+    const subscription = await subscribe().then((res) => res?.toJSON())
+    return await this.fetcher('auth/refresh', { subscription })
       .then((data) => {
         this._config.token = data.token
         return true
