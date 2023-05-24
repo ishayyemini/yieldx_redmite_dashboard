@@ -110,7 +110,7 @@ const DeviceView = () => {
                   defaultValue={device.conf.training.preOpen}
                 />
                 <TextField
-                  label={'Vent Duration [secs]'}
+                  label={'Vent Duration [mins]'}
                   name={'ventDur'}
                   defaultValue={device.conf.training.ventDur}
                 />
@@ -121,7 +121,7 @@ const DeviceView = () => {
                     defaultValue={device.conf.training.on1}
                   />
                   <TextField
-                    label={'Sleep [secs]'}
+                    label={'Sleep [mins]'}
                     name={'sleep1'}
                     defaultValue={device.conf.training.sleep1}
                   />
@@ -162,7 +162,7 @@ const DeviceView = () => {
                   defaultValue={device.conf.detection.startDet}
                 />
                 <TextField
-                  label={'Run Vent [secs]'}
+                  label={'Run Vent [mins]'}
                   name={'vent2'}
                   defaultValue={device.conf.detection.vent2}
                 />
@@ -173,7 +173,7 @@ const DeviceView = () => {
                     defaultValue={device.conf.detection.on2}
                   />
                   <TextField
-                    label={'Sleep [secs]'}
+                    label={'Sleep [mins]'}
                     name={'sleep2'}
                     defaultValue={device.conf.detection.sleep2}
                   />
