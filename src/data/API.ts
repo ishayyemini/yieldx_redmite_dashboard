@@ -51,6 +51,8 @@ export type DeviceType = {
     }
   }
   lastUpdated: Date
+  nextUpdate: Date
+  afterNextUpdate: Date
 }
 
 export type DeviceUpdateType = {
@@ -249,8 +251,9 @@ class APIClass {
               'end',
               'trained',
               'detection',
-              'lastSens',
               'lastUpdated',
+              'nextUpdate',
+              'afterNextUpdate',
             ].includes(key) &&
             !isNaN(value) &&
             value !== 0

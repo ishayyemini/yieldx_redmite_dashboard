@@ -15,11 +15,17 @@ import GlobalContext from '../data/GlobalContext'
 import { StatusDisplay } from './app/AppComponents'
 
 const OutdatedWrapper = styled(Box)`
-  tr:has(span.outdated) {
-    opacity: 0.5;
-  }
-  .itemRow:has(span.outdated) {
-    opacity: 0.5;
+  tr:has(span.error),
+  .itemRow:has(span.error) {
+    background: var(--error-container);
+    color: var(--on-error-container);
+
+    span.error {
+      background: var(--error);
+      color: var(--on-error);
+      padding: 0 5px;
+      box-decoration-break: clone;
+    }
   }
 `
 

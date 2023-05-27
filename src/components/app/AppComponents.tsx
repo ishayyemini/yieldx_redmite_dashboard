@@ -271,14 +271,13 @@ const calcTime = (
   if (typeof deadline === 'string') {
     const [hour, min] = deadline.split(':')
     deadline = moment().hour(+hour).minute(+min)
+    if (ago && deadline.isAfter(moment())) deadline.subtract(1, 'day')
+    if (!ago && deadline.isBefore(moment())) deadline.add(1, 'day')
   }
   deadline = moment(deadline).second(0)
   const now = moment().second(0)
 
-  const minutes =
-    deadline
-      .add(!ago && now.isAfter(deadline, 'hour') ? 1 : 0, 'day')
-      .diff(now, 'minutes') * (ago ? -1 : 1)
+  const minutes = deadline.diff(now, 'minutes') * (ago ? -1 : 1)
 
   return (
     (minutes >= 60
@@ -299,32 +298,42 @@ const StatusDisplay: FC<{ device: DeviceType }> = ({ device }) => {
   }, [])
 
   let time, status
+  const isOutdated = moment().subtract(10, 'minutes').isAfter(device.nextUpdate)
 
   switch (device.status.mode) {
     case 'PreOpen Lid':
-      time = calcTime(
-        moment(device.lastUpdated).add(device.conf.training.preOpen, 'minutes')
-      )
+      time = calcTime(device.nextUpdate)
       status = time ? `Starting in ${time}` : 'Starting'
+      if (isOutdated) status = "Device didn't start training"
       break
     case 'Training':
       time = calcTime(device.status.start, true)
       status = time
         ? `Training in progress for ${time}`
         : 'Training started just now'
+      if (isOutdated)
+        status = `Device stuck in training mode and didn't update for ${
+          moment().diff(device.nextUpdate, 'days') < 1
+            ? calcTime(device.nextUpdate, true)
+            : 'more than a day'
+        }`
       break
     case 'Done Training':
     case 'Lid Closed Daily-Cycle Done':
-      time = calcTime(device.conf.daily.open1)
+      time = calcTime(device.nextUpdate)
       status = time ? `Return to operation in ${time}` : 'Starting'
+      if (isOutdated) status = "Device didn't start daily cycle"
       break
     case 'Lid Opened Idling':
-      time = calcTime(device.conf.daily.close1)
+      time = calcTime(device.nextUpdate)
       status = time ? `Closing lid in ${time}` : 'Closing lid now'
+      if (isOutdated)
+        status = "Device stuck in daily cycle and didn't close lid"
       break
     case 'Lid Closed Idling':
-      time = calcTime(device.conf.detection.startDet)
+      time = calcTime(device.nextUpdate)
       status = time ? `Inspecting in ${time}` : 'Starting inspection'
+      if (isOutdated) status = "Device didn't start inspection"
       break
     case 'Inspecting':
     case 'Report Inspection':
@@ -332,18 +341,18 @@ const StatusDisplay: FC<{ device: DeviceType }> = ({ device }) => {
       status = time
         ? `Inspection in progress for ${time}`
         : 'Inspection started just now'
+      if (isOutdated)
+        status = `Device stuck in inspection mode and didn't update for ${
+          moment().diff(device.nextUpdate, 'days') < 1
+            ? calcTime(device.nextUpdate, true)
+            : 'more than a day'
+        }`
       break
     default:
       status = device.status.mode
   }
 
-  if (moment(device.lastUpdated).diff(moment(), 'days')) status = 'Outdated'
-
-  return (
-    <Text className={status === 'Outdated' ? 'outdated' : undefined}>
-      {status}
-    </Text>
-  )
+  return <Text className={isOutdated ? 'error' : ''}>{status}</Text>
 }
 
 export { TextField, Loader, CollapsibleSide, ProgressLoader, StatusDisplay }
