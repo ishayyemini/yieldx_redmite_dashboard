@@ -5,7 +5,7 @@ export const subscribe = async (): Promise<PushSubscription | null> => {
 
   let subscription = await registration?.pushManager.getSubscription()
   if (!subscription)
-    subscription = await registration.pushManager
+    subscription = await registration?.pushManager
       .subscribe({
         applicationServerKey: tokens.WEBPUSH_PUBLIC_KEY,
         userVisibleOnly: true,
