@@ -38,11 +38,9 @@ export type DeviceType = {
       sleep1: number
       train: number
     }
-    daily: {
+    detection: {
       open1: string
       close1: string
-    }
-    detection: {
       startDet: string
       vent2: number
       on2: number

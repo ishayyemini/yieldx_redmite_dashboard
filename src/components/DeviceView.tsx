@@ -135,26 +135,20 @@ const DeviceView = () => {
 
               <Box border={'bottom'} pad={{ bottom: 'small' }} gap={'small'}>
                 <Heading level={4} margin={'none'}>
-                  Daily Detection
+                  Detection Cycle
                 </Heading>
                 <TextField
                   label={'Open Lid [HH:MM]'}
                   name={'open1'}
                   type={'time'}
-                  defaultValue={device.conf.daily.open1}
+                  defaultValue={device.conf.detection.open1}
                 />
                 <TextField
                   label={'Close Lid [HH:MM]'}
                   name={'close1'}
                   type={'time'}
-                  defaultValue={device.conf.daily.close1}
+                  defaultValue={device.conf.detection.close1}
                 />
-              </Box>
-
-              <Box border={'bottom'} pad={{ bottom: 'small' }} gap={'small'}>
-                <Heading level={4} margin={'none'}>
-                  Detection Cycle
-                </Heading>
                 <TextField
                   label={'Start [HH:MM]'}
                   name={'startDet'}
