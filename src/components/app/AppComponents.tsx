@@ -284,8 +284,8 @@ const calcTime = (
     (minutes >= 60
       ? Math.floor(minutes / 60) + ' hour' + (minutes >= 120 ? 's' : '')
       : '') +
-    (minutes >= 60 && minutes % 60 ? ' and ' : '') +
-    (minutes > 0 && minutes % 60
+    (minutes > 60 && minutes < 720 && minutes % 60 ? ' and ' : '') +
+    (minutes > 0 && minutes < 720 && minutes % 60
       ? (minutes % 60) + ' minute' + (minutes % 60 > 1 ? 's' : '')
       : '')
   )
@@ -356,11 +356,7 @@ const StatusDisplay: FC<{ device: DeviceType }> = ({ device }) => {
     <Text>{status}</Text>
   ) : (
     <Text className={'error'}>
-      Hasn't reported{' '}
-      {moment().diff(device.nextUpdate, 'days') < 1
-        ? calcTime(device.nextUpdate, true)
-        : 'for more than a day'}{' '}
-      ({badStatus})
+      Hasn't reported {calcTime(device.nextUpdate, true)} ({badStatus})
     </Text>
   )
 }
