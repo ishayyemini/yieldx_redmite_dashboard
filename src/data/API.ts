@@ -29,6 +29,8 @@ export type DeviceType = {
     trained: Date | 0
     detection: Date | 0
     mode: ModeType
+    currentCycle: number
+    totalCycles: number
   }
   conf: {
     training: {

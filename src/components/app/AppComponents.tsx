@@ -280,6 +280,7 @@ const calcTime = (
   const minutes = deadline.diff(now, 'minutes') * (ago ? -1 : 1)
 
   return (
+    (minutes > 0 ? (ago ? 'for ' : 'in ') : '') +
     (minutes >= 60
       ? Math.floor(minutes / 60) + ' hour' + (minutes >= 120 ? 's' : '')
       : '') +
@@ -297,62 +298,71 @@ const StatusDisplay: FC<{ device: DeviceType }> = ({ device }) => {
     setInterval(() => refreshTime(moment().minutes()), 1000)
   }, [])
 
-  let time, status
+  let time, status, badStatus
   const isOutdated = moment().subtract(10, 'minutes').isAfter(device.nextUpdate)
 
   switch (device.status.mode) {
     case 'PreOpen Lid':
       time = calcTime(device.nextUpdate)
-      status = time ? `Starting in ${time}` : 'Starting'
-      if (isOutdated) status = "Device didn't start training"
+      status = `Starting training ${time}`
+      badStatus = "should've started training"
       break
     case 'Training':
       time = calcTime(device.status.start, true)
-      status = time
-        ? `Training in progress for ${time}`
-        : 'Training started just now'
-      if (isOutdated)
-        status = `Device stuck in training mode and didn't update for ${
-          moment().diff(device.nextUpdate, 'days') < 1
-            ? calcTime(device.nextUpdate, true)
-            : 'more than a day'
-        }`
+      status = `Training cycle ${device.status.currentCycle} out of ${
+        device.status.totalCycles
+      } (total training in progress ${time || 'for 1 minute'})`
+      badStatus =
+        device.status.currentCycle < device.status.totalCycles
+          ? `should've entered training cycle ${
+              device.status.currentCycle + 1
+            } out of ${device.status.totalCycles}`
+          : "should've finished training"
       break
     case 'Done Training':
     case 'Lid Closed Daily-Cycle Done':
       time = calcTime(device.nextUpdate)
-      status = time ? `Return to operation in ${time}` : 'Starting'
-      if (isOutdated) status = "Device didn't start daily cycle"
+      status = `Opening lid ${time}`
+      badStatus = "should've opened lid"
       break
     case 'Lid Opened Idling':
       time = calcTime(device.nextUpdate)
-      status = time ? `Closing lid in ${time}` : 'Closing lid now'
-      if (isOutdated)
-        status = "Device stuck in daily cycle and didn't close lid"
+      status = `Closing lid ${time}`
+      badStatus = "should've closed lid"
       break
     case 'Lid Closed Idling':
       time = calcTime(device.nextUpdate)
-      status = time ? `Inspecting in ${time}` : 'Starting inspection'
-      if (isOutdated) status = "Device didn't start inspection"
+      status = `Starting inspection ${time}`
+      badStatus = "should've started inspection"
       break
     case 'Inspecting':
     case 'Report Inspection':
       time = calcTime(device.conf.detection.startDet, true)
-      status = time
-        ? `Inspection in progress for ${time}`
-        : 'Inspection started just now'
-      if (isOutdated)
-        status = `Device stuck in inspection mode and didn't update for ${
-          moment().diff(device.nextUpdate, 'days') < 1
-            ? calcTime(device.nextUpdate, true)
-            : 'more than a day'
-        }`
+      status = `Inspection cycle ${device.status.currentCycle} out of ${
+        device.status.totalCycles
+      } (total inspection in progress ${time || 'for 1 minute'})`
+      badStatus =
+        device.status.currentCycle < device.status.totalCycles
+          ? `should've entered inspection cycle ${
+              device.status.currentCycle + 1
+            } out of ${device.status.totalCycles}`
+          : "should've finished inspection"
       break
     default:
       status = device.status.mode
   }
 
-  return <Text className={isOutdated ? 'error' : ''}>{status}</Text>
+  return !isOutdated ? (
+    <Text>{status}</Text>
+  ) : (
+    <Text className={'error'}>
+      Hasn't reported{' '}
+      {moment().diff(device.nextUpdate, 'days') < 1
+        ? calcTime(device.nextUpdate, true)
+        : 'for more than a day'}{' '}
+      ({badStatus})
+    </Text>
+  )
 }
 
 export { TextField, Loader, CollapsibleSide, ProgressLoader, StatusDisplay }
