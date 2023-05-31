@@ -5,8 +5,12 @@ import App, { appLoader } from './App'
 import AuthLayout, { authLoader } from './components/AuthLayout'
 import GlobalStyle, { theme } from './components/app/GlobalStyle'
 import SignIn, { signInAction } from './components/auth/SignIn'
-import Devices from './components/Devices'
-import DeviceView, { deviceUpdateAction } from './components/DeviceView'
+import Devices from './components/devices/Devices'
+import DeviceView from './components/devices/DeviceView'
+import DeviceConfig, {
+  deviceConfigAction,
+} from './components/devices/DeviceConfig'
+import DeviceOTA, { deviceOtaAction } from './components/devices/DeviceOTA'
 import Settings, { updateSettingsAction } from './components/Settings'
 
 const router = createBrowserRouter([
@@ -18,7 +22,20 @@ const router = createBrowserRouter([
         element: <App />,
         children: [
           { index: true, element: <Devices /> },
-          { path: ':id', element: <DeviceView />, action: deviceUpdateAction },
+          {
+            path: ':id',
+            element: <DeviceView />,
+            children: [
+              // { index: true, element: <div /> },
+              {
+                // path: 'config',
+                index: true,
+                element: <DeviceConfig />,
+                action: deviceConfigAction,
+              },
+              { path: 'ota', element: <DeviceOTA />, action: deviceOtaAction },
+            ],
+          },
           {
             path: 'settings',
             element: <Settings />,

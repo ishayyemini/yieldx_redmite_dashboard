@@ -98,6 +98,7 @@ type APIRoute =
   | 'user'
   | 'update-settings'
   | 'update-device-conf'
+  | 'update-device-ota'
   | 'list-ota'
 type APIResponse<Route> = {
   user: Route extends 'auth/login' | 'user' ? UserType : never
@@ -207,6 +208,10 @@ class APIClass {
     await this.fetcher('list-ota').then(({ otaList }) =>
       this._setGlobalState((oldCtx) => ({ ...oldCtx, otaList }))
     )
+  }
+
+  async updateDeviceOTA(id: string, version: string) {
+    return await this.fetcher('update-device-ota', { id, version })
   }
 
   async refreshTokens() {

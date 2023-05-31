@@ -11,8 +11,8 @@ import {
 import { useNavigate } from 'react-router'
 import styled from 'styled-components'
 
-import GlobalContext from '../data/GlobalContext'
-import { StatusDisplay } from './app/AppComponents'
+import GlobalContext from '../../data/GlobalContext'
+import { StatusDisplay } from '../app/AppComponents'
 
 const OutdatedWrapper = styled(Box)`
   tr:has(span.error),
@@ -100,7 +100,7 @@ const Devices = () => {
                 </Box>
               </Box>
               <Button
-                label={'Edit Configuration'}
+                label={'Manage Device'}
                 onClick={() => navigate(item.id)}
                 alignSelf={'center'}
                 primary
