@@ -13,10 +13,12 @@ export type UpdateContextType = (
 export type ContextType = {
   user?: UserType
   devices?: { [MAC: string]: DeviceType }
+  otaList: string[]
   updateContext: UpdateContextType
 }
 
 const GlobalContext = createContext<ContextType>({
+  otaList: [],
   updateContext: () => null,
 })
 

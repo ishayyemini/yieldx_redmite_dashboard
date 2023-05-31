@@ -22,9 +22,13 @@ export const appLoader: ActionFunction = async () => {
 const App = () => {
   const user = useLoaderData() as UserType
 
-  const [globalState, setGlobalState] = useState<GlobalState>({ user })
+  const [globalState, setGlobalState] = useState<GlobalState>({
+    user,
+    otaList: [],
+  })
 
   useEffect(() => {
+    API.getOtaList()
     API.configure(setGlobalState)
   }, [])
 

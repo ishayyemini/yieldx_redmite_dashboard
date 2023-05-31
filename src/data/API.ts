@@ -98,10 +98,12 @@ type APIRoute =
   | 'user'
   | 'update-settings'
   | 'update-device-conf'
+  | 'list-ota'
 type APIResponse<Route> = {
   user: Route extends 'auth/login' | 'user' ? UserType : never
   token: Route extends 'auth/login' | 'auth/refresh' ? string : never
   settings: Route extends 'update-settings' ? SettingsType : never
+  otaList: Route extends 'list-ota' ? string[] : never
 }
 
 class APIClass {
@@ -140,7 +142,7 @@ class APIClass {
         this._url
       }/${route}`,
       {
-        method: 'POST',
+        method: ['list-ota'].includes(route) ? 'GET' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this._config.token}`,
@@ -199,6 +201,12 @@ class APIClass {
 
   async updateDeviceConf(id: string, conf: DeviceUpdateType) {
     return await this.fetcher('update-device-conf', { id, ...conf })
+  }
+
+  async getOtaList() {
+    await this.fetcher('list-ota').then(({ otaList }) =>
+      this._setGlobalState((oldCtx) => ({ ...oldCtx, otaList }))
+    )
   }
 
   async refreshTokens() {
