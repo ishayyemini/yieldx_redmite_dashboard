@@ -1,5 +1,5 @@
-this.addEventListener('activate', () => {
-  console.log('service worker activated')
+this.addEventListener('install', () => {
+  this.skipWaiting()
 })
 
 this.addEventListener('push', async (event) => {
@@ -25,7 +25,7 @@ this.addEventListener('push', async (event) => {
 })
 
 this.addEventListener('notificationclick', (event) => {
-  event.notification.close()
+  // event.notification.close()
   event.waitUntil(
     this.clients.matchAll({ type: 'window' }).then((clientList) => {
       for (let i = 0; i < clientList.length; i++) {
