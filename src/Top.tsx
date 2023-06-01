@@ -12,6 +12,7 @@ import DeviceConfig, {
 } from './components/devices/DeviceConfig'
 import DeviceOTA, { deviceOtaAction } from './components/devices/DeviceOTA'
 import Settings, { updateSettingsAction } from './components/Settings'
+import DeviceOverview from './components/devices/DeviceOverview'
 
 const router = createBrowserRouter([
   {
@@ -26,10 +27,9 @@ const router = createBrowserRouter([
             path: ':id',
             element: <DeviceView />,
             children: [
-              // { index: true, element: <div /> },
+              { index: true, element: <DeviceOverview /> },
               {
-                // path: 'config',
-                index: true,
+                path: 'config',
                 element: <DeviceConfig />,
                 action: deviceConfigAction,
               },

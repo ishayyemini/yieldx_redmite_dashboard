@@ -14,7 +14,7 @@ const DeviceView = () => {
   const device = devices?.[id]
 
   const { pathname } = useLocation()
-  const pages = ['', 'ota'] // TODO add overview page
+  const pages = ['', 'config', 'ota']
 
   return device ? (
     <Card width={{ max: '400px' }} align={'center'} alignSelf={'center'}>
@@ -28,11 +28,15 @@ const DeviceView = () => {
       ) : null}
 
       <Tabs activeIndex={pages.indexOf(pathname.split('/')[2] || '')}>
-        {/*<Tab title="Overview" onClick={() => navigate('')} />*/}
+        <Tab
+          title={'Overview'}
+          icon={<Icons.CircleInformation />}
+          onClick={() => navigate('')}
+        />
         <Tab
           title={'Configuration'}
           icon={<Icons.Configure />}
-          onClick={() => navigate('')}
+          onClick={() => navigate('config')}
         />
         <Tab
           title={'OTA'}
