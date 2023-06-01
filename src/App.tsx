@@ -56,10 +56,20 @@ const App = () => {
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
+  const customerList = user.admin
+    ? [
+        ...new Set(
+          Object.values(globalState.devices ?? {})
+            .filter((device) => device.customer)
+            .map((device) => 'Customer: ' + device.customer)
+        ),
+      ]
+    : []
+
   const filterElement = (
     <Select
       value={filter}
-      options={Object.keys(filters)}
+      options={[...new Set([...Object.keys(filters), ...customerList, filter])]}
       onChange={({ option }) => setFilter(option)}
     />
   )
@@ -96,7 +106,14 @@ const App = () => {
             {filterElement}
           </Box>
         ) : null}
-        <Outlet context={{ filterFunc: filters[filter] || filters.All }} />
+        <Outlet
+          context={{
+            filterFunc: filter.startsWith('Customer: ')
+              ? (device: DeviceType) =>
+                  device.customer === filter.replace('Customer: ', '')
+              : filters[filter] || filters.All,
+          }}
+        />
       </Main>
     </GlobalContext.Provider>
   )
