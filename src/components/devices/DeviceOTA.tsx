@@ -38,21 +38,38 @@ const DeviceOTA = () => {
   const device = devices?.[id]
 
   return device ? (
-    <Form method={'POST'} onSubmit={() => toggleLoading(true)}>
+    <Form
+      method={'POST'}
+      onSubmit={() => toggleLoading(true)}
+      style={{ maxWidth: '100%' }}
+    >
       <Stack>
         <Box
           align={'center'}
           style={{ visibility: loading ? 'hidden' : 'initial' }}
         >
           <Box gap={'small'} margin={{ vertical: 'medium' }} fill>
-            <Heading level={4} margin={'none'}>
-              Select new OTA version
-            </Heading>
-            <Select
-              options={otaList}
-              name={'version'}
-              placeholder={'Choose Version'}
-            />
+            <Box border={'bottom'} pad={{ bottom: 'small' }} gap={'small'}>
+              <Heading level={4} margin={'none'}>
+                Current version
+              </Heading>
+              <Text>
+                {device.version?.startsWith('http')
+                  ? 'Updating to ' + device.version.split('/').slice(-1)[0]
+                  : device.version}
+              </Text>
+            </Box>
+
+            <Box border={'bottom'} pad={{ bottom: 'small' }} gap={'small'}>
+              <Heading level={4} margin={'none'}>
+                Select new OTA version
+              </Heading>
+              <Select
+                options={otaList}
+                name={'version'}
+                placeholder={'Choose Version'}
+              />
+            </Box>
           </Box>
 
           {error ? (

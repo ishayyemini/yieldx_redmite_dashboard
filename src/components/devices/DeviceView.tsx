@@ -1,6 +1,7 @@
 import { useContext } from 'react'
 import { Card, Heading, Tab, Tabs } from 'grommet'
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
+import * as Icons from 'grommet-icons'
 
 import GlobalContext from '../../data/GlobalContext'
 
@@ -28,8 +29,16 @@ const DeviceView = () => {
 
       <Tabs activeIndex={pages.indexOf(pathname.split('/')[2] || '')}>
         {/*<Tab title="Overview" onClick={() => navigate('')} />*/}
-        <Tab title="Configuration" onClick={() => navigate('')} />
-        <Tab title="OTA" onClick={() => navigate('ota')} />
+        <Tab
+          title={'Configuration'}
+          icon={<Icons.Configure />}
+          onClick={() => navigate('')}
+        />
+        <Tab
+          title={'OTA'}
+          icon={<Icons.Sync />}
+          onClick={() => navigate('ota')}
+        />
       </Tabs>
 
       <Outlet />

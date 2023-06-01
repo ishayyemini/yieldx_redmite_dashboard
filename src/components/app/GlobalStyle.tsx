@@ -187,6 +187,8 @@ const lightTheme = css`
   /* neutral */
   --background: var(--md-ref-palette-neutral99);
   --on-background: var(--md-ref-palette-neutral10);
+  --surface: var(--md-ref-palette-neutral-variant98);
+  --on-surface: var(--md-ref-palette-neutral-variant10);
   --surface-variant: var(--md-ref-palette-neutral-variant90);
   --on-surface-variant: var(--md-ref-palette-neutral-variant30);
   --outline: var(--md-ref-palette-neutral-variant50);
@@ -236,7 +238,7 @@ export const theme: ThemeType = {
   global: {
     font: { family: 'Lato, sans-serif' },
     colors: {
-      brand: 'var(--main)',
+      brand: 'var(--primary)',
       'accent-1': 'var(--accent1)',
       'accent-2': 'var(--accent2)',
       muted: 'var(--muted)',
@@ -268,9 +270,25 @@ export const theme: ThemeType = {
       round: 'small',
       elevation: 'none',
       extend: css`
-        //color: var(--on-surface-variant);
+        color: var(--on-surface-variant);
       `,
     },
+  },
+  tab: {
+    active: { color: 'var(--primary)' },
+    border: { active: { color: 'var(--primary) !important' } },
+    color: 'var(--on-surface)',
+    extend: css`
+      flex-direction: column;
+      justify-content: end;
+      height: 100%;
+      border-bottom: solid 2px transparent;
+
+      svg {
+        height: 20px;
+        width: 20px;
+      }
+    `,
   },
   layer: {
     background: 'var(--background)',

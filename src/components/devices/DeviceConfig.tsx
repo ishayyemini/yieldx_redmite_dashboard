@@ -35,7 +35,7 @@ export const deviceConfigAction: ActionFunction = async (args) => {
 
   if (args.params.id)
     return await API.updateDeviceConf(args.params.id, data)
-      .then(() => redirect('/'))
+      .then(() => redirect('..'))
       .catch((e) => e.message)
   else return redirect('/')
 }
