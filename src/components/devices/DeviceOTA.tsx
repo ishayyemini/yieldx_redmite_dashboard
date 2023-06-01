@@ -41,7 +41,7 @@ const DeviceOTA = () => {
     <Form
       method={'POST'}
       onSubmit={() => toggleLoading(true)}
-      style={{ maxWidth: '100%' }}
+      style={{ width: '100%' }}
     >
       <Stack>
         <Box
