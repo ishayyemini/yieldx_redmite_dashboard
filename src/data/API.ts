@@ -54,6 +54,7 @@ export type DeviceType = {
   lastUpdated: Date
   nextUpdate: Date
   afterNextUpdate: Date
+  hidden?: boolean
 }
 
 export type DeviceUpdateType = {
@@ -101,6 +102,7 @@ type APIRoute =
   | 'update-device-conf'
   | 'update-device-ota'
   | 'list-ota'
+  | 'hide-device'
 type APIResponse<Route> = {
   user: Route extends 'auth/login' | 'user' ? UserType : never
   token: Route extends 'auth/login' | 'auth/refresh' ? string : never
@@ -213,6 +215,10 @@ class APIClass {
 
   async updateDeviceOTA(id: string, version: string) {
     return await this.fetcher('update-device-ota', { id, version })
+  }
+
+  async hideDevice(id: string, hidden: boolean) {
+    return await this.fetcher('hide-device', { id, hidden })
   }
 
   async refreshTokens() {
