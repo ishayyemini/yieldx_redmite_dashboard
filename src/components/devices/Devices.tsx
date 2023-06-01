@@ -8,11 +8,12 @@ import {
   ResponsiveContext,
   Text,
 } from 'grommet'
-import { useNavigate } from 'react-router'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import styled from 'styled-components'
 
 import GlobalContext from '../../data/GlobalContext'
 import { StatusDisplay } from '../app/AppComponents'
+import { DeviceType } from '../../data/API'
 
 const OutdatedWrapper = styled(Box)`
   tr:has(span.error),
@@ -31,6 +32,9 @@ const OutdatedWrapper = styled(Box)`
 
 const Devices = () => {
   const { devices, user } = useContext(GlobalContext)
+  const { filterFunc } = useOutletContext() as {
+    filterFunc: (device: DeviceType) => boolean
+  }
   const size = useContext(ResponsiveContext)
 
   const [open, setOpen] = useState(
@@ -41,9 +45,11 @@ const Devices = () => {
 
   const admin = ['lior', 'amit', 'ishay2'].includes(user?.username ?? '')
 
+  const filteredDevices = Object.values(devices ?? {}).filter(filterFunc)
+
   return size === 'small' ? (
     <OutdatedWrapper>
-      {Object.values(devices ?? {}).map((item, index) => (
+      {filteredDevices.map((item, index) => (
         <Box
           fill={'horizontal'}
           border={'bottom'}
@@ -172,7 +178,7 @@ const Devices = () => {
             render: (datum) => <StatusDisplay device={datum} />,
           },
         ]}
-        data={Object.values(devices ?? {})}
+        data={filteredDevices}
         onClickRow={({ datum }) => navigate(datum.id)}
         primaryKey={'id'}
         sortable
