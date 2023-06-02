@@ -3,10 +3,10 @@ import tokens from './tokens.json'
 export const subscribe = async (): Promise<PushSubscription | null> => {
   const registration = await navigator.serviceWorker?.ready
 
-  let subscription = await registration?.pushManager.getSubscription()
+  let subscription = await registration?.pushManager?.getSubscription()
   if (!subscription)
     subscription = await registration?.pushManager
-      .subscribe({
+      ?.subscribe({
         applicationServerKey: tokens.WEBPUSH_PUBLIC_KEY,
         userVisibleOnly: true,
       })
