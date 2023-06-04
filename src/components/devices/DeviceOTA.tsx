@@ -55,7 +55,7 @@ const DeviceOTA = () => {
               </Heading>
               <Text>
                 {device.version?.startsWith('http')
-                  ? 'Updating to ' + device.version.split('/').slice(-1)[0]
+                  ? 'Updating to ' + device.version.match(/(?<=fw).*?(?=\.bin)/)
                   : device.version}
               </Text>
             </Box>

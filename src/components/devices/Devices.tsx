@@ -89,7 +89,19 @@ const Devices = () => {
             </Box>
           </Box>
           <Text weight={'bold'}>
-            Status: <StatusDisplay device={item} />
+            Status: <StatusDisplay device={item} />{' '}
+            <Text
+              size={'small'}
+              margin={{ top: '4px' }}
+              style={{ float: 'right' }}
+            >
+              {item.version?.includes('-RM(')
+                ? `V${item.version.split('-RM(')[0]}`
+                : null}
+              {item.version?.startsWith('http')
+                ? `Updating to ${item.version.match(/(?<=fw).*?(?=\.bin)/)}`
+                : null}
+            </Text>
           </Text>
           <Collapsible open={open[item.id]}>
             <Card gap={'small'} width={'fit-content'} alignSelf={'center'}>
@@ -126,7 +138,20 @@ const Devices = () => {
         columns={[
           ...(admin
             ? [
-                { property: 'id', header: 'Device ID' },
+                {
+                  property: 'id',
+                  header: 'Device ID',
+                  render: (datum: DeviceType) =>
+                    datum.id +
+                    (datum.version?.includes('-RM(')
+                      ? ` (V${datum.version.split('-RM(')[0]})`
+                      : '') +
+                    (datum.version?.startsWith('http')
+                      ? ` (Updating to ${datum.version.match(
+                          /(?<=fw).*?(?=\.bin)/
+                        )})`
+                      : ''),
+                },
                 { property: 'customer', header: 'Customer' },
               ]
             : []),
