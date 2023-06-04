@@ -64,10 +64,14 @@ const Devices = () => {
           {admin ? (
             <Box direction={'row'} justify={'between'}>
               <Text weight={'bold'} size={'small'}>
-                Device ID: {item.id}
+                Device ID: {item.id} {item.comment ? `(${item.comment})` : ''}
               </Text>
               <Text size={'small'}>{item.customer}</Text>
             </Box>
+          ) : item.comment ? (
+            <Text weight={'bold'} size={'small'}>
+              Comment: {item.comment}
+            </Text>
           ) : null}
           <Box direction={'row'} align={'center'} justify={'between'}>
             <Text>
@@ -126,6 +130,7 @@ const Devices = () => {
                 { property: 'customer', header: 'Customer' },
               ]
             : []),
+          { property: 'comment', header: 'Comment' },
           { property: 'location', header: 'Location' },
           { property: 'house', header: 'House' },
           { property: 'inHouseLoc', header: 'In House Location' },

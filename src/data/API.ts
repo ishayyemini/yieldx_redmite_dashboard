@@ -22,6 +22,7 @@ export type DeviceType = {
   inHouseLoc: string
   customer: string
   contact: string
+  comment: string
   version?: string
   status: {
     battery: 'Ok' | 'Low'

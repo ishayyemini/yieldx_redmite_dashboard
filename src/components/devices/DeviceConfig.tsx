@@ -84,7 +84,11 @@ const DeviceConfig = () => {
                 name={'contact'}
                 defaultValue={device.contact}
               />
-              <TextField label={'Comment'} name={'comment'} />
+              <TextField
+                label={'Comment'}
+                name={'comment'}
+                defaultValue={device.comment}
+              />
             </Box>
 
             <Box border={'bottom'} pad={{ bottom: 'small' }} gap={'small'}>
