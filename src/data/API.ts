@@ -1,9 +1,11 @@
 import jwt_decode, { JwtPayload } from 'jwt-decode'
+import queryString from 'query-string'
 
 import { UpdateContextType } from './GlobalContext'
 import { subscribe } from '../subscription'
+import moment, { Moment } from 'moment/moment'
 
-type ModeType =
+export type ModeType =
   | 'Idle'
   | 'Idle Sleep'
   | 'PreOpen Lid'
@@ -24,6 +26,7 @@ export type DeviceType = {
   contact: string
   comment: string
   version?: string
+  history?: OperationType[]
   status: {
     battery: 'Ok' | 'Low'
     start: Date | 0
@@ -82,6 +85,12 @@ export type SettingsType = {
   mqtt?: string
 }
 
+export type OperationType = {
+  category: 'Training' | 'Daily Cycle'
+  totalCycles: number
+  cycles: ({ start: Moment; end?: Moment } | null)[]
+}
+
 export type UserType = {
   username?: string
   id?: string
@@ -104,11 +113,13 @@ type APIRoute =
   | 'update-device-ota'
   | 'list-ota'
   | 'hide-device'
+  | 'get-device-history'
 type APIResponse<Route> = {
   user: Route extends 'auth/login' | 'user' ? UserType : never
   token: Route extends 'auth/login' | 'auth/refresh' ? string : never
   settings: Route extends 'update-settings' ? SettingsType : never
   otaList: Route extends 'list-ota' ? string[] : never
+  deviceHistory: Route extends 'get-device-history' ? OperationType[] : never
 }
 
 class APIClass {
@@ -130,7 +141,7 @@ class APIClass {
 
   private async fetcher<Route extends APIRoute>(
     route: Route,
-    body?: object
+    body?: { [p: string]: any }
   ): Promise<APIResponse<Route>> {
     if (!route.startsWith('auth')) {
       let parsed
@@ -142,21 +153,33 @@ class APIClass {
         throw new Error('Unauthorized')
     }
 
+    const getReq = ['list-ota', 'get-device-history'].includes(route)
+
     return fetch(
       `${process.env.NODE_ENV === 'development' ? 'http' : 'https'}://${
         this._url
-      }/${route}`,
+      }/${route}` + (getReq && body ? '?' + queryString.stringify(body) : ''),
       {
-        method: ['list-ota'].includes(route) ? 'GET' : 'POST',
+        method: getReq ? 'GET' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this._config.token}`,
         },
-        body: body ? JSON.stringify(body) : undefined,
+        body: !getReq && body ? JSON.stringify(body) : undefined,
         credentials: 'include',
       }
     )
-      .then((res) => res.json())
+      .then((res) => {
+        if (route === 'get-device-history')
+          return res
+            .text()
+            .then((r) =>
+              JSON.parse(r, (key, value) =>
+                ['start', 'end'].includes(key) ? moment(value) : value
+              )
+            )
+        else return res.json()
+      })
       .then((res) => {
         if (res?.data) return res.data
         else throw new Error(res?.error?.message || 'Server Error')
@@ -214,6 +237,24 @@ class APIClass {
     )
   }
 
+  async getDeviceHistory(id: string) {
+    return await this.fetcher('get-device-history', {
+      id,
+      server: this._config.user?.settings?.mqtt,
+    }).then((res) => {
+      this._setGlobalState((oldCtx) => ({
+        ...oldCtx,
+        devices: oldCtx.devices?.[id]
+          ? {
+              ...oldCtx.devices,
+              [id]: { ...oldCtx.devices[id], history: res.deviceHistory },
+            }
+          : oldCtx.devices,
+      }))
+      return res.deviceHistory
+    })
+  }
+
   async updateDeviceOTA(id: string, version: string) {
     return await this.fetcher('update-device-ota', { id, version })
   }
@@ -239,6 +280,7 @@ class APIClass {
     if (this._config.user?.admin)
       return this.fetcher('update-settings', { settings }).then(
         ({ settings }) => {
+          if (this._config.user) this._config.user.settings = settings
           this._setGlobalState((oldCtx) => ({
             ...oldCtx,
             user: { ...oldCtx.user, settings },
