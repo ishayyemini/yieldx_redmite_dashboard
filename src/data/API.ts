@@ -133,7 +133,7 @@ class APIClass {
       ? `${window.location.hostname}:4000`
       : 'api.yieldx-biosec.com'
   _client: WebSocket | undefined
-  _subscribed: boolean = false
+  _mqttRetries: number = 0
 
   configure(setGlobalState?: UpdateContextType) {
     if (setGlobalState) this._setGlobalState = setGlobalState
@@ -192,10 +192,10 @@ class APIClass {
       username,
       password,
       subscription,
-    }).then(async (data) => {
+    }).then((data) => {
       this._config.user = data.user
       this._config.token = data.token
-      await this.setupMqtt()
+      this.setupMqtt()
       return this._config.user
     })
   }
@@ -206,8 +206,8 @@ class APIClass {
         this._setGlobalState((oldCtx) => ({ ...oldCtx, user: undefined }))
         this._config.user = {}
         this._config.token = undefined
-        this._subscribed = false
-        this._client?.close()
+        this._mqttRetries = 0
+        this._client?.close(1000)
         this._client = undefined
       })
   }
@@ -215,9 +215,9 @@ class APIClass {
   async loadUser(): Promise<UserType> {
     if (this._config.user) return this._config.user
     return await this.fetcher('user')
-      .then(async (data) => {
+      .then((data) => {
         this._config.user = data.user
-        if (!this._client) await this.setupMqtt()
+        if (!this._client) this.setupMqtt()
         return this._config.user
       })
       .catch((err) => {
@@ -290,62 +290,69 @@ class APIClass {
       )
   }
 
-  async setupMqtt(): Promise<WebSocket | undefined> {
-    if (this._config.token) {
-      this._setGlobalState((oldCtx) => ({ ...oldCtx, devices: {} }))
+  async setupMqtt(): Promise<void> {
+    this._mqttRetries++
 
-      const token = this._config.token
-      const ws = new WebSocket(
-        `${process.env.NODE_ENV === 'development' ? 'ws' : 'wss'}://${
-          this._url
-        }/mqtt`
-      )
-      let authorized = false
+    if (this._mqttRetries <= 5)
+      if (!this._config.token) await this.refreshTokens()
+      else {
+        if (!this._mqttRetries)
+          this._setGlobalState((oldCtx) => ({ ...oldCtx, devices: {} }))
 
-      ws.onopen = () => {
-        ws.send(token)
-      }
-      ws.onmessage = (msg) => {
-        if (!authorized && msg.data === 'authorized') authorized = true
-        else if (authorized) {
-          const data = JSON.parse(msg.data, (key, value) =>
-            [
-              'start',
-              'end',
-              'trained',
-              'detection',
-              'lastUpdated',
-              'nextUpdate',
-              'afterNextUpdate',
-            ].includes(key) &&
-            !isNaN(value) &&
-            value !== 0
-              ? new Date(value)
-              : value
-          )
+        const token = this._config.token
+        const ws = new WebSocket(
+          `${process.env.NODE_ENV === 'development' ? 'ws' : 'wss'}://${
+            this._url
+          }/mqtt`
+        )
+        let authorized = false
 
-          this._setGlobalState((oldCtx) => ({
-            ...oldCtx,
-            devices: {
-              ...(oldCtx.devices ?? {}),
-              [data.id]: {
-                ...(oldCtx.devices?.[data.id] ?? {}),
-                ...data,
-              },
-            },
-          }))
+        ws.onopen = () => {
+          ws.send(token)
         }
-      }
-      ws.onerror = (err) => {
-        console.log(err)
-      }
-      ws.onclose = (msg) => {
-        console.log(msg)
-      }
+        ws.onmessage = (msg) => {
+          if (!authorized && msg.data === 'authorized') {
+            authorized = true
+            this._mqttRetries = 0
+          } else if (authorized) {
+            const data = JSON.parse(msg.data, (key, value) =>
+              [
+                'start',
+                'end',
+                'trained',
+                'detection',
+                'lastUpdated',
+                'nextUpdate',
+                'afterNextUpdate',
+              ].includes(key) &&
+              !isNaN(value) &&
+              value !== 0
+                ? new Date(value)
+                : value
+            )
 
-      this._client = ws
-      return ws
-    }
+            this._setGlobalState((oldCtx) => ({
+              ...oldCtx,
+              devices: {
+                ...(oldCtx.devices ?? {}),
+                [data.id]: {
+                  ...(oldCtx.devices?.[data.id] ?? {}),
+                  ...data,
+                },
+              },
+            }))
+          }
+        }
+        ws.onerror = (err) => {
+          console.log(err)
+        }
+        ws.onclose = (msg) => {
+          if (msg.code !== 1000) setTimeout(() => this.setupMqtt(), 1000)
+        }
+
+        this._client = ws
+      }
+    else console.log('Too many MQTT retries')
   }
 }
 
