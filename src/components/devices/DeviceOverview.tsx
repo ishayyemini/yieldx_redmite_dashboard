@@ -94,15 +94,19 @@ const DeviceOverview = () => {
                     :
                   </Text>
 
-                  {cycle ? (
-                    <Box direction={'row'} gap={'xsmall'}>
-                      {!cycle.end ? (
-                        <Text style={{ fontStyle: 'italic' }}>
-                          Expected at {cycle.start.format('HH:mm')}
-                        </Text>
-                      ) : (
+                  {!cycle ? (
+                    <Text color={'var(--error)'}>Skipped</Text>
+                  ) : (
+                    <Box direction={'row'}>
+                      <Text
+                        style={{ fontStyle: !cycle.end ? 'italic' : 'normal' }}
+                        title={cycle.start.toLocaleString()}
+                      >
+                        {!cycle.end ? 'Expected at ' : null}
+                        {cycle.start.format('HH:mm')}
+                      </Text>
+                      {cycle.end ? (
                         <>
-                          <Text>{cycle.start.format('HH:mm')}</Text>
                           <Icons.FormNextLink />
                           <Text
                             style={{
@@ -110,15 +114,27 @@ const DeviceOverview = () => {
                                 ? 'italic'
                                 : 'normal',
                             }}
+                            title={cycle.end.toLocaleString()}
                           >
                             {cycle.end.format('HH:mm')}
                           </Text>
                         </>
-                      )}
+                      ) : null}
                     </Box>
-                  ) : (
-                    <Text color={'var(--error)'}>Skipped</Text>
                   )}
+
+                  {operation.cycles[cIndex + 1]?.start.isAfter(
+                    cycle?.end,
+                    'days'
+                  ) ? (
+                    <Box
+                      background={'var(--outline-variant)'}
+                      style={{ gridColumn: 2, fontStyle: 'italic' }}
+                      align={'center'}
+                    >
+                      Overnight
+                    </Box>
+                  ) : null}
                 </Fragment>
               ))}
             </Grid>
