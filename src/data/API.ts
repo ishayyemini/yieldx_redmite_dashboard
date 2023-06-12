@@ -27,6 +27,7 @@ export type DeviceType = {
   comment: string
   version?: string
   history?: OperationType[]
+  detections?: DetectionType[]
   status: {
     battery: 'Ok' | 'Low'
     start: Date | 0
@@ -91,6 +92,11 @@ export type OperationType = {
   cycles: ({ start: Moment; end?: Moment } | null)[]
 }
 
+export type DetectionType = {
+  timestamp: Date
+  value: number
+}
+
 export type UserType = {
   username?: string
   id?: string
@@ -114,12 +120,14 @@ type APIRoute =
   | 'list-ota'
   | 'hide-device'
   | 'get-device-history'
+  | 'get-device-detections'
 type APIResponse<Route> = {
   user: Route extends 'auth/login' | 'user' ? UserType : never
   token: Route extends 'auth/login' | 'auth/refresh' ? string : never
   settings: Route extends 'update-settings' ? SettingsType : never
   otaList: Route extends 'list-ota' ? string[] : never
   deviceHistory: Route extends 'get-device-history' ? OperationType[] : never
+  detections: Route extends 'get-device-detections' ? DetectionType[] : never
 }
 
 class APIClass {
@@ -153,7 +161,11 @@ class APIClass {
         throw new Error('Unauthorized')
     }
 
-    const getReq = ['list-ota', 'get-device-history'].includes(route)
+    const getReq = [
+      'list-ota',
+      'get-device-history',
+      'get-device-detections',
+    ].includes(route)
 
     return fetch(
       `${process.env.NODE_ENV === 'development' ? 'http' : 'https'}://${
@@ -176,6 +188,14 @@ class APIClass {
             .then((r) =>
               JSON.parse(r, (key, value) =>
                 ['start', 'end'].includes(key) ? moment(value) : value
+              )
+            )
+        else if (route === 'get-device-detections')
+          return res
+            .text()
+            .then((r) =>
+              JSON.parse(r, (key, value) =>
+                key === 'timestamp' ? new Date(value) : value
               )
             )
         else return res.json()
@@ -252,6 +272,24 @@ class APIClass {
           : oldCtx.devices,
       }))
       return res.deviceHistory
+    })
+  }
+
+  async getDeviceDetections(id: string) {
+    return await this.fetcher('get-device-detections', {
+      id,
+      server: this._config.user?.settings?.mqtt,
+    }).then(({ detections }) => {
+      this._setGlobalState((oldCtx) => ({
+        ...oldCtx,
+        devices: oldCtx.devices?.[id]
+          ? {
+              ...oldCtx.devices,
+              [id]: { ...oldCtx.devices[id], detections },
+            }
+          : oldCtx.devices,
+      }))
+      return detections
     })
   }
 
