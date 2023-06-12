@@ -3,6 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Fragment, useCallback, useContext, useEffect, useState } from 'react'
 import moment from 'moment'
 import * as Icons from 'grommet-icons'
+import {
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 
 import API from '../../data/API'
 import GlobalContext from '../../data/GlobalContext'
@@ -28,11 +36,14 @@ const DeviceOverview = () => {
   }, [device])
 
   useEffect(() => {
-    if (device?.lastUpdated) API.getDeviceHistory(id).then()
+    if (device?.lastUpdated) {
+      API.getDeviceHistory(id).then()
+      API.getDeviceDetections(id).then()
+    }
   }, [device?.lastUpdated, id])
 
   return device ? (
-    <Box fill={'horizontal'} align={'center'} margin={{ top: 'medium' }}>
+    <Box fill align={'center'} margin={{ top: 'medium' }}>
       <Box
         border={'bottom'}
         pad={{ bottom: 'small' }}
@@ -51,13 +62,45 @@ const DeviceOverview = () => {
         />
       </Box>
 
+      {device.detections?.length ? (
+        <Box
+          basis={'100px'}
+          pad={{ vertical: 'small' }}
+          width={'100%'}
+          margin={{ bottom: 'medium' }}
+          border={'bottom'}
+          flex={'grow'}
+        >
+          <ResponsiveContainer width={'100%'} height={'100%'}>
+            <BarChart
+              width={200}
+              height={400}
+              data={device.detections || []}
+              barCategoryGap={0}
+              margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+            >
+              <Tooltip
+                labelFormatter={(timestamp) =>
+                  moment(timestamp).format('YYYY-MM-DD HH:mm')
+                }
+                formatter={(value) => [Number(value).toFixed(6), 'Value']}
+              />
+              <XAxis dataKey={'timestamp'} hide />
+              <YAxis domain={[0, 1]} style={{ fontSize: '0.7em' }} width={33} />
+              <Bar dataKey={'value'} fill={'var(--primary)'} />
+            </BarChart>
+          </ResponsiveContainer>
+        </Box>
+      ) : null}
+
       <Box
-        height={{ max: '400px' }}
+        basis={'200px'}
         width={'100%'}
         direction={'column-reverse'}
         overflow={'auto'}
         margin={{ bottom: 'medium' }}
         border={'bottom'}
+        flex={'grow'}
       >
         {device.history?.map((operation, oIndex) => (
           <Box
