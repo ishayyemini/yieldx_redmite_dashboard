@@ -93,8 +93,9 @@ export type OperationType = {
 }
 
 export type DetectionType = {
-  timestamp: Date
+  timestamp: number
   value: number
+  newSession?: boolean
 }
 
 export type UserType = {
@@ -188,14 +189,6 @@ class APIClass {
             .then((r) =>
               JSON.parse(r, (key, value) =>
                 ['start', 'end'].includes(key) ? moment(value) : value
-              )
-            )
-        else if (route === 'get-device-detections')
-          return res
-            .text()
-            .then((r) =>
-              JSON.parse(r, (key, value) =>
-                key === 'timestamp' ? new Date(value) : value
               )
             )
         else return res.json()

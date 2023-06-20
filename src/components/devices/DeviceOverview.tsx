@@ -6,6 +6,7 @@ import * as Icons from 'grommet-icons'
 import {
   Bar,
   BarChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -75,17 +76,32 @@ const DeviceOverview = () => {
             <BarChart
               width={200}
               height={400}
-              data={device.detections || []}
+              data={(device.detections || []).map((item, index) => ({
+                ...item,
+                index,
+              }))}
               barCategoryGap={0}
               margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
             >
               <Tooltip
-                labelFormatter={(timestamp) =>
-                  moment(timestamp).format('YYYY-MM-DD HH:mm')
+                labelFormatter={(index, items) =>
+                  moment(Number(items?.[0]?.payload?.timestamp) || null).format(
+                    'YYYY-MM-DD HH:mm'
+                  )
                 }
-                formatter={(value) => [Number(value).toFixed(6), 'Value']}
+                formatter={(value, _, item) =>
+                  item?.payload?.newSession
+                    ? ['Start', 'New Session']
+                    : [Number(value).toFixed(6), 'Value']
+                }
               />
-              <XAxis dataKey={'timestamp'} hide />
+
+              <ReferenceLine
+                x={device.detections.findIndex((item) => item.newSession)}
+                stroke={'var(--error)'}
+              />
+
+              <XAxis dataKey={'index'} hide />
               <YAxis domain={[0, 1]} style={{ fontSize: '0.7em' }} width={33} />
               <Bar dataKey={'value'} fill={'var(--primary)'} />
             </BarChart>
