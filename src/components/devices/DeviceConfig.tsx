@@ -8,6 +8,7 @@ import {
   useNavigate,
   useParams,
 } from 'react-router-dom'
+import moment from 'moment'
 
 import { Loader, TextField } from '../app/AppComponents'
 import GlobalContext from '../../data/GlobalContext'
@@ -32,6 +33,20 @@ export const deviceConfigAction: ActionFunction = async (args) => {
         : value,
     ])
   ) as DeviceUpdateType
+
+  const [open, close, start] = [data.open1, data.close1, data.startDet].map(
+    (item) =>
+      moment({
+        hours: Number(item.split(':')[0]),
+        minutes: Number(item.split(':')[1]),
+      })
+  )
+  if (close.isBefore(open)) close.add(1, 'day')
+  if (start.isBefore(close)) start.add(1, 'day')
+
+  const dailyCycle = start.diff(open, 'minutes') + data.detect
+
+  if (dailyCycle > 24 * 60) return "Total daily cycle mustn't be over 24 hours"
 
   if (args.params.id)
     return await API.updateDeviceConf(args.params.id, data)
@@ -101,7 +116,7 @@ const DeviceConfig = () => {
                 defaultValue={device.conf.training.preOpen}
               />
               <TextField
-                label={'Vent Duration [mins]'}
+                label={'Vent Duration [secs]'}
                 name={'ventDur'}
                 defaultValue={device.conf.training.ventDur}
               />
@@ -147,7 +162,7 @@ const DeviceConfig = () => {
                 defaultValue={device.conf.detection.startDet}
               />
               <TextField
-                label={'Run Vent [mins]'}
+                label={'Run Vent [secs]'}
                 name={'vent2'}
                 defaultValue={device.conf.detection.vent2}
               />
