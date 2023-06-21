@@ -99,6 +99,7 @@ const DeviceOverview = () => {
               <ReferenceLine
                 x={device.detections.findIndex((item) => item.newSession)}
                 stroke={'var(--error)'}
+                strokeWidth={4}
               />
 
               <XAxis dataKey={'index'} hide />
